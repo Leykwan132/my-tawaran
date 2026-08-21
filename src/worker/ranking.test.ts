@@ -69,17 +69,19 @@ describe("minimumTotalForRank", () => {
 		expect(minimumTotalForRank(2, [1_288_000, 964_000, 725_000])).toBe(964_000);
 	});
 
-	it("returns the minimum bid when only lower ranks are available", () => {
-		expect(minimumTotalForRank(2, [1_288_000], { minimumSen: 100 })).toBe(100);
+	it("defaults the floor to RM2", () => {
+		expect(minimumTotalForRank(9, [])).toBe(200);
+	});
+		expect(minimumTotalForRank(2, [1_288_000], { minimumSen: 200 })).toBe(200);
 	});
 
 	it("ignores the current listing when calculating a new target", () => {
 		expect(
 			minimumTotalForRank(1, [1_288_000], {
 				excludeTotalSen: 1_288_000,
-				minimumSen: 100,
+				minimumSen: 200,
 			}),
-		).toBe(100);
+		).toBe(200);
 	});
 });
 

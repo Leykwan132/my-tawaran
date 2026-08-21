@@ -10,13 +10,13 @@ import {
 	projectRank,
 	calculateListingTopUpSen,
 	minimumTotalForRank,
+	MINIMUM_SEN,
 } from "../worker/ranking";
 import { DEMO_PRODUCTS, DEMO_RAISED_SEN, type Product } from "@/demo-products";
 import logo from "./assets/mytawaran-hibiscus.png";
 import malaysiaFlag from "./assets/malaysia-flag.png";
 import "./App.css";
 
-const MINIMUM_SEN = 100;
 const BID_STEP_SEN = 100;
 const PAGE_SIZE = 50;
 
@@ -114,9 +114,11 @@ function StatsPage() {
 			<section className="stats-header">
 				<p className="eyebrow">{t("statsEyebrow")}</p>
 				<h1>{t("statsTitle")}</h1>
-				<p className="raised-total raised-total--stats">
-					{t("raisedSoFar", { amount: currency.format(totalRaisedSen / 100) })}
-				</p>
+				{totalRaisedSen > 0 ? (
+					<p className="raised-total raised-total--stats">
+						{t("raisedSoFar", { amount: currency.format(totalRaisedSen / 100) })}
+					</p>
+				) : null}
 				<p>{t("statsDescription")}</p>
 			</section>
 			{embedUrl ? (
@@ -554,9 +556,11 @@ function App() {
 							amount: currency.format(displayAmountSen / 100),
 						})}
 					</p>
-					<p className="raised-total">
-						{t("raisedSoFar", { amount: currency.format(displayRaisedSen / 100) })}
-					</p>
+					{displayRaisedSen > 0 ? (
+						<p className="raised-total">
+							{t("raisedSoFar", { amount: currency.format(displayRaisedSen / 100) })}
+						</p>
+					) : null}
 					{(errorRaw || errorKey) && <p className="form-error">{errorRaw || (errorKey ? t(errorKey) : "")}</p>}
 				</form>
 

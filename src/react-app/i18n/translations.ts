@@ -64,11 +64,11 @@ export const translations: Record<Locale, Messages> = {
 		language: "Language",
 		aboutTrigger: "What is mytawaran?",
 		aboutTitle: "What is MyTawaran?",
-		aboutDescription: "A paid leaderboard for Malaysian products. Pay to claim rank, outbid others, and drive traffic to your site.",
+		aboutDescription: "A paid leaderboard for Malaysian products. Pay to claim rank, outbid others, and drive traffic to your site. Minimum bid is RM2.",
 		aboutRules: [
 			{
 				title: "Claim your spot",
-				description: "Enter your product URL and choose how much you want on the board. Minimum bid is RM1.",
+				description: "Enter your product URL and choose how much you want on the board. Minimum bid is RM2.",
 			},
 			{
 				title: "Rank by contribution",
@@ -125,11 +125,11 @@ export const translations: Record<Locale, Messages> = {
 		language: "Bahasa",
 		aboutTrigger: "Apa itu mytawaran?",
 		aboutTitle: "Apa itu MyTawaran?",
-		aboutDescription: "Papan kedudukan berbayar untuk produk Malaysia. Bayar untuk tuntut ranking, atasi tawaran lain, dan hantar trafik ke tapak anda.",
+		aboutDescription: "Papan kedudukan berbayar untuk produk Malaysia. Bayar untuk tuntut ranking, atasi tawaran lain, dan hantar trafik ke tapak anda. Tawaran minimum ialah RM2.",
 		aboutRules: [
 			{
 				title: "Tuntut tempat anda",
-				description: "Masukkan URL produk dan pilih jumlah di papan. Tawaran minimum ialah RM1.",
+				description: "Masukkan URL produk dan pilih jumlah di papan. Tawaran minimum ialah RM2.",
 			},
 			{
 				title: "Ranking mengikut sumbangan",
@@ -186,11 +186,11 @@ export const translations: Record<Locale, Messages> = {
 		language: "语言",
 		aboutTrigger: "什么是 mytawaran？",
 		aboutTitle: "什么是 MyTawaran？",
-		aboutDescription: "面向马来西亚产品的付费排行榜。付款抢占排名，出价超过他人，为你的网站带来流量。",
+		aboutDescription: "面向马来西亚产品的付费排行榜。付款抢占排名，出价超过他人，为你的网站带来流量。最低出价为 RM2。",
 		aboutRules: [
 			{
 				title: "抢占席位",
-				description: "输入产品网址并选择上榜金额。最低出价为 RM1。",
+				description: "输入产品网址并选择上榜金额。最低出价为 RM2。",
 			},
 			{
 				title: "按贡献排名",

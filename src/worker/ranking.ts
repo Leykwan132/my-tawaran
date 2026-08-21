@@ -1,3 +1,5 @@
+export const MINIMUM_SEN = 200;
+
 export type RankedProduct = {
 	id: string;
 	totalPaidSen: number;
@@ -43,7 +45,7 @@ export function minimumTotalForRank(
 	productTotals: number[],
 	options: { excludeTotalSen?: number | null; minimumSen?: number } = {},
 ): number {
-	const minimumSen = options.minimumSen ?? 100;
+	const minimumSen = options.minimumSen ?? MINIMUM_SEN;
 	const normalizedRank = Math.max(1, Math.floor(targetRank) || 1);
 	const totals = [...productTotals];
 

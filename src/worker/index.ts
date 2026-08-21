@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
 	buildCheckoutCopy,
 	calculateContributionDue,
+	MINIMUM_SEN,
 } from "./ranking";
 import { isTerminalCheckoutFailure, verifyStripeSignature } from "./stripe";
 
@@ -312,7 +313,7 @@ app.post("/api/checkout", async (c) => {
 				400,
 			);
 		}
-		if (amountDueSen < 100) throw new ApiError("Checkout minimum is RM1.00", 400);
+		if (amountDueSen < MINIMUM_SEN) throw new ApiError("Checkout minimum is RM2.00", 400);
 
 		const projectedTotal = product.total_paid_sen + amountDueSen;
 		const higherCount = await db
