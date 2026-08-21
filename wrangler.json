@@ -3,7 +3,9 @@
 	"name": "my-tawaran",
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2025-10-08",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"observability": {
 		"enabled": true
 	},
@@ -11,5 +13,13 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "my_tawaran_db",
+			"database_name": "my-tawaran",
+			"database_id": "9c2d8fce-83ee-4bd0-ad50-167afdd8e3e4",
+			"migrations_dir": "migrations"
+		}
+	]
 }

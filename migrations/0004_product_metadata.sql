@@ -1,0 +1,2 @@
+ALTER TABLE products ADD COLUMN description TEXT NOT NULL DEFAULT '';
+ALTER TABLE products ADD COLUMN click_count INTEGER NOT NULL DEFAULT 0 CHECK (click_count >= 0);

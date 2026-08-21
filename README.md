@@ -56,6 +56,52 @@ npm run dev
 
 Your application will be available at [http://localhost:5173](http://localhost:5173).
 
+## MyTawaran configuration
+
+The Worker needs two production secrets. Set them after deploying the Worker
+and never commit them to source control:
+
+```bash
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
+```
+
+`STRIPE_SECRET_KEY` should be a Stripe restricted API key that can create and
+manage Checkout Sessions. Checkout charges the difference between the target
+listing total and what that domain has already paid.
+
+In Stripe Workbench, add a webhook endpoint at:
+
+```text
+https://my-tawaran.leykwan132.workers.dev/api/stripe/webhook
+```
+
+Subscribe it to `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, and `checkout.session.expired`.
+Reveal its signing secret and save that value as `STRIPE_WEBHOOK_SECRET`.
+Create separate test and live endpoints—their `whsec_` values differ.
+
+For the client, add these public Vite variables to a local `.env` file or your
+deployment environment:
+
+```text
+VITE_PUBLIC_POSTHOG_KEY=phc_...
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL=https://app.posthog.com/embedded/...
+```
+
+The Stats page uses the final value to display a public PostHog dashboard.
+Create an insight for `outbound_link_clicked`, grouped by
+`destination_url`, alongside MyTawaran page-view traffic.
+
+Apply the schema before a deployment that serves checkout traffic:
+
+```bash
+npx wrangler d1 migrations apply my-tawaran --local
+npx wrangler d1 migrations apply my-tawaran --remote
+```
+
 ## Production
 
 Build your project for production:
