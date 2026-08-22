@@ -4,6 +4,7 @@ import {
 	buildCheckoutCopy,
 	projectRank,
 	calculateListingTopUpSen,
+	claimPreviewForRank,
 	minimumTotalForRank,
 	rankProducts,
 } from "./ranking";
@@ -61,12 +62,16 @@ describe("calculateListingTopUpSen", () => {
 });
 
 describe("minimumTotalForRank", () => {
-	it("returns the leader total needed for rank 1", () => {
-		expect(minimumTotalForRank(1, [1_288_000, 964_000])).toBe(1_288_000);
+	it("sets a selected occupied rank RM1 above its current total", () => {
+		expect(minimumTotalForRank(2, [1_288_000, 964_000, 725_000])).toBe(964_100);
 	});
 
-	it("returns the matching total needed for an intermediate rank", () => {
-		expect(minimumTotalForRank(2, [1_288_000, 964_000, 725_000])).toBe(964_000);
+	it("sets rank 1 RM1 above the leader's total", () => {
+		expect(minimumTotalForRank(1, [1_288_000, 964_000])).toBe(1_288_100);
+	});
+
+	it("sets an intermediate rank RM1 above its current total", () => {
+		expect(minimumTotalForRank(2, [1_288_000, 964_000, 725_000])).toBe(964_100);
 	});
 
 	it("defaults the floor to RM2", () => {
@@ -84,6 +89,15 @@ describe("minimumTotalForRank", () => {
 				minimumSen: 200,
 			}),
 		).toBe(200);
+	});
+});
+
+describe("claimPreviewForRank", () => {
+	it("keeps the hovered rank and previews RM1 above that listing", () => {
+		expect(claimPreviewForRank(6, [900, 800, 700, 600, 500, 400])).toEqual({
+			rank: 6,
+			bidSen: 500,
+		});
 	});
 });
 

@@ -1,4 +1,5 @@
 export const MINIMUM_SEN = 200;
+export const RANK_BID_INCREMENT_SEN = 100;
 
 export type RankedProduct = {
 	id: string;
@@ -57,12 +58,24 @@ export function minimumTotalForRank(
 	totals.sort((left, right) => right - left);
 
 	if (totals.length === 0) return minimumSen;
-	if (normalizedRank === 1) return Math.max(minimumSen, totals[0]);
+	if (normalizedRank === 1) return Math.max(minimumSen, totals[0] + RANK_BID_INCREMENT_SEN);
 	if (normalizedRank <= totals.length) {
-		return Math.max(minimumSen, totals[normalizedRank - 1]);
+		return Math.max(minimumSen, totals[normalizedRank - 1] + RANK_BID_INCREMENT_SEN);
 	}
 
 	return minimumSen;
+}
+
+export function claimPreviewForRank(
+	targetRank: number,
+	productTotals: number[],
+	options: { excludeTotalSen?: number | null; minimumSen?: number } = {},
+): { rank: number; bidSen: number } {
+	const rank = Math.max(1, Math.floor(targetRank) || 1);
+	return {
+		rank,
+		bidSen: minimumTotalForRank(rank, productTotals, options),
+	};
 }
 
 export function buildCheckoutCopy({

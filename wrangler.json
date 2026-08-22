@@ -14,6 +14,9 @@
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application"
 	},
+	"vars": {
+		"CF_ZONE_ID": "b4c3970d5dd2e002a07676ba38dc6943"
+	},
 	"d1_databases": [
 		{
 			"binding": "my_tawaran_db",

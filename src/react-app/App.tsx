@@ -1,17 +1,18 @@
 import { FormEvent, Fragment, useEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
-import { Clock, Globe } from "lucide-react";
+import { Clock, Globe, Menu, X } from "lucide-react";
 import posthog from "posthog-js";
 import { AboutMytawaranDialog } from "@/components/about-mytawaran-dialog";
+import { StatsDashboard } from "@/components/stats-dashboard";
 import { LanguageSwitch } from "@/components/language-switch";
-import { LeaderboardPagination } from "@/components/leaderboard-pagination";
 import { Separator } from "@/components/ui/separator";
 import { useLocale } from "@/i18n/locale-provider";
 import {
 	projectRank,
-	minimumTotalForRank,
+	claimPreviewForRank,
 	MINIMUM_SEN,
 } from "../worker/ranking";
 import { DEMO_PRODUCTS, DEMO_TRENDING, DEMO_LATEST, DEMO_RAISED_SEN, type LatestPayment, type Product, type TrendingSite } from "@/demo-products";
+import { appendLeaderboardPage } from "@/leaderboard-pages";
 import SplitFlapText from "@/components/SplitFlapText";
 import logo from "./assets/mytawaran-hibiscus.png";
 import malaysiaFlag from "./assets/malaysia-flag.png";
@@ -75,34 +76,68 @@ function AutoSizeInput({
 
 function Header() {
 	const { t } = useLocale();
+	const [menuOpen, setMenuOpen] = useState(false);
+
+	useEffect(() => {
+		if (!menuOpen) return;
+		const previous = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = previous;
+		};
+	}, [menuOpen]);
 
 	return (
-		<header className="site-header">
-			<a className="brand" href="/">
-				<img src={logo} alt="" />
-				<span>mytawaran</span>
-			</a>
-			<nav className="site-nav" aria-label={t("navMain")}>
-				<LanguageSwitch />
-				<a href="/">{t("navLeaderboard")}</a>
-				<a href="/stats">{t("navStats")}</a>
-				<AboutMytawaranDialog variant="nav" />
-			</nav>
-		</header>
+		<>
+			{menuOpen ? (
+				<button
+					type="button"
+					className="site-nav-overlay"
+					aria-label={t("navMenuClose")}
+					onClick={() => setMenuOpen(false)}
+				/>
+			) : null}
+			<header className={`site-header${menuOpen ? " is-open" : ""}`}>
+				<a className="brand" href="/">
+					<img src={logo} alt="" />
+					<span>mytawaran</span>
+				</a>
+				<button
+					type="button"
+					className="site-nav-toggle"
+					aria-expanded={menuOpen}
+					aria-controls="site-nav"
+					aria-label={menuOpen ? t("navMenuClose") : t("navMenuOpen")}
+					onClick={() => setMenuOpen((open) => !open)}
+				>
+					{menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+				</button>
+				<nav id="site-nav" className="site-nav" aria-label={t("navMain")}>
+					<LanguageSwitch />
+					<a href="/" onClick={() => setMenuOpen(false)}>
+						{t("navLeaderboard")}
+					</a>
+					<a href="/stats" onClick={() => setMenuOpen(false)}>
+						{t("navStats")}
+					</a>
+					<AboutMytawaranDialog variant="nav" />
+				</nav>
+			</header>
+		</>
 	);
 }
 
 function Footer() {
-	const { t } = useLocale();
-
 	return (
 		<footer className="site-footer">
 			<p>
-				{t("footerBuiltProudly")}
-				<img className="site-footer-flag" src={malaysiaFlag} alt="Malaysia" />
-				{t("footerAndBy")}{" "}
+				Brought to you by {" "}
 				<a href="https://www.linkedin.com/in/ley-kwan-c-129678228/" target="_blank" rel="noreferrer">
 					Kwan
+				</a>{" "}
+				and {" "}
+				<a href="https://kilobot.app" target="_blank" rel="noreferrer">
+					kilobot.app
 				</a>
 			</p>
 		</footer>
@@ -111,25 +146,13 @@ function Footer() {
 
 function StatsPage() {
 	const { t } = useLocale();
-	const embedUrl = import.meta.env.VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL as string | undefined;
 	return (
 		<main className="site-shell stats-shell">
 			<Header />
 			<section className="stats-header">
-				<p className="eyebrow">{t("statsEyebrow")}</p>
 				<h1>{t("statsTitle")}</h1>
-				<p>{t("statsDescription")}</p>
 			</section>
-			{embedUrl ? (
-				<iframe className="posthog-embed" src={embedUrl} title={t("statsIframeTitle")} />
-			) : (
-				<section className="stats-empty">
-					<h2>{t("statsEmptyTitle")}</h2>
-					<p>
-						{t("statsEmptyBody")}
-					</p>
-				</section>
-			)}
+			<StatsDashboard />
 			<Footer />
 		</main>
 	);
@@ -159,12 +182,51 @@ function ProductCopy({ product }: { product: Product }) {
 	);
 }
 
-function LeaderboardRowCopy({ product }: { product: Product }) {
+function RankChip({
+	rank,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	rank: number;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
+	const { t } = useLocale();
+	return (
+		<button
+			type="button"
+			className="leaderboard-row-rank"
+			aria-label={t("claim", { rank })}
+			onMouseEnter={() => onPreviewRank(rank)}
+			onMouseLeave={() => onPreviewRank(null)}
+			onFocus={() => onPreviewRank(rank)}
+			onBlur={() => onPreviewRank(null)}
+			onClick={(event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				onClaimRank(rank);
+			}}
+		>
+			<span className="leaderboard-row-rank-idle">#{rank}</span>
+			<span className="leaderboard-row-rank-action">{t("claim", { rank })}</span>
+		</button>
+	);
+}
+
+function LeaderboardRowCopy({
+	product,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	product: Product;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
 	return (
 		<div className="leaderboard-row-copy">
 			<div className="leaderboard-row-title">
-				<span className="leaderboard-row-rank">#{product.rank}</span>
 				<span className="product-domain">{product.domain}</span>
+				<RankChip rank={product.rank} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
 			</div>
 			{product.description ? <p className="product-description">{product.description}</p> : null}
 		</div>
@@ -196,45 +258,124 @@ function ProductLink({
 function PodiumPlaceholder({ rank }: { rank: 1 | 2 | 3 }) {
 	const { t } = useLocale();
 	return (
-		<div className={`podium-card podium-card--rank-${rank} podium-card--empty`} aria-label={t("rankAvailable", { rank })}>
+		<div
+			className={`podium-card podium-card--rank-${rank} podium-card--empty`}
+			aria-label={`${t("rankAvailable", { rank })}. ${t("podiumUnclaimed")} ${t("podiumCouldBeYours")}`}
+		>
 			<div className="podium-card-header podium-card-header--empty">
 				<span className={`podium-rank podium-rank--${rank}`}>#{rank}</span>
 			</div>
 			<div className="podium-placeholder-mark" aria-hidden="true">
 				?
 			</div>
+			<div className="podium-placeholder-copy">
+				<p className="podium-placeholder-title">{t("podiumUnclaimed")}</p>
+				<p className="podium-placeholder-hint">{t("podiumCouldBeYours")}</p>
+			</div>
 		</div>
 	);
 }
 
-function PodiumCard({ product, rank }: { product: Product; rank: 1 | 2 | 3 }) {
+function PodiumClaimButton({
+	rank,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	rank: 1 | 2 | 3;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
+	const { t } = useLocale();
+	return (
+		<button
+			type="button"
+			className={`podium-claim-button podium-claim-button--rank-${rank}`}
+			aria-label={t("claim", { rank })}
+			onMouseEnter={() => onPreviewRank(rank)}
+			onMouseLeave={() => onPreviewRank(null)}
+			onFocus={() => onPreviewRank(rank)}
+			onBlur={() => onPreviewRank(null)}
+			onClick={() => onClaimRank(rank)}
+		>
+			<span className="podium-claim-idle">#{rank}</span>
+			<span className="podium-claim-action">{t("claim", { rank })}</span>
+		</button>
+	);
+}
+
+function PodiumCard({
+	product,
+	rank,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	product: Product;
+	rank: 1 | 2 | 3;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
 	const { t, currency, number } = useLocale();
 	return (
-		<ProductLink product={product} className={`podium-card podium-card--rank-${rank}`}>
+		<div className={`podium-card podium-card--rank-${rank}`}>
 			<div className="podium-card-header">
-				<span className={`podium-rank podium-rank--${rank}`}>#{rank}</span>
+				<PodiumClaimButton rank={rank} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
 				<div className="podium-card-stats">
 					<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
 					<span className="podium-card-clicks">{formatClicks(product.clickCount, number, t)}</span>
 				</div>
 			</div>
-			<img src={product.faviconUrl} alt="" />
-			<ProductCopy product={product} />
-		</ProductLink>
+			<ProductLink product={product} className="podium-card-link">
+				<img src={product.faviconUrl} alt="" />
+				<ProductCopy product={product} />
+			</ProductLink>
+		</div>
 	);
 }
 
-function LeaderboardRow({ product }: { product: Product }) {
+function LeaderboardRow({
+	product,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	product: Product;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
 	const { t, currency, number } = useLocale();
+	const rankClass = product.rank >= 1 && product.rank <= 3 ? ` leaderboard-row--rank-${product.rank}` : "";
 	return (
-		<ProductLink product={product} className="leaderboard-row">
+		<ProductLink product={product} className={`leaderboard-row${rankClass}`}>
 			<img src={product.faviconUrl} alt="" />
-			<LeaderboardRowCopy product={product} />
+			<LeaderboardRowCopy product={product} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
 			<div className="leaderboard-row-stats">
 				<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
 				<span className="leaderboard-row-clicks">{formatClicks(product.clickCount, number, t)}</span>
 			</div>
 		</ProductLink>
+	);
+}
+
+function LeaderboardPlaceholder({
+	rank,
+	onClaimRank,
+	onPreviewRank,
+}: {
+	rank: 1 | 2 | 3;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
+}) {
+	const { t } = useLocale();
+	return (
+		<div className={`leaderboard-row leaderboard-row--empty leaderboard-row--rank-${rank}`} aria-label={`${t("rankAvailable", { rank })}. ${t("podiumUnclaimed")} ${t("podiumCouldBeYours")}`}>
+			<span className="leaderboard-row-empty-mark" aria-hidden="true">?</span>
+			<div className="leaderboard-row-copy">
+				<div className="leaderboard-row-title">
+					<span className="product-domain">{t("podiumUnclaimed")}</span>
+					<RankChip rank={rank} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
+				</div>
+				<p className="product-description">{t("podiumCouldBeYours")}</p>
+			</div>
+		</div>
 	);
 }
 
@@ -271,34 +412,29 @@ function TotalContribution({ sen }: { sen: number }) {
 
 function Leaderboard({
 	products,
-	total,
-	page,
-	onPageChange,
 	trending,
 	latest,
 	totalRaisedSen,
+	onClaimRank,
+	onPreviewRank,
 }: {
 	products: Product[];
-	total: number;
-	page: number;
-	onPageChange: (page: number) => void;
 	trending: TrendingSite[];
 	latest: LatestPayment[];
 	totalRaisedSen: number;
+	onClaimRank: (rank: number) => void;
+	onPreviewRank: (rank: number | null) => void;
 }) {
-	const showPodium = page === 0;
-	const rest = showPodium ? products.filter((product) => product.rank > 3) : products;
+	const showPodium = true;
+	const rest = products.filter((product) => product.rank > 3);
 	const { t, currency, number } = useLocale();
-
-	if (products.length === 0 && total === 0) {
-		return (
-			<div className="leaderboard">
-				<TotalContribution sen={totalRaisedSen} />
-			</div>
-		);
-	}
-
 	const podiumOrder = [2, 1, 3] as const;
+	const topRanks = [1, 2, 3] as const;
+	const showTrending = showPodium && trending.length > 0;
+	const showLatest = showPodium && latest.length > 0;
+	const showRails = showTrending || showLatest;
+	const showRows = rest.length > 0 || showPodium;
+	const SHOW_TOTAL_CONTRIBUTION = false;
 
 	return (
 		<div className="leaderboard">
@@ -308,126 +444,146 @@ function Leaderboard({
 						{podiumOrder.map((rank) => {
 							const product = products.find((entry) => entry.rank === rank);
 							if (!product) return <PodiumPlaceholder key={rank} rank={rank} />;
-							return <PodiumCard key={product.id} product={product} rank={rank} />;
+							return <PodiumCard key={product.id} product={product} rank={rank} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />;
 						})}
 					</div>
 				</div>
 			)}
 
-			<div className={`leaderboard-body${showPodium ? " leaderboard-body--rails" : ""}`}>
-				{showPodium ? (
+			{(showRails || showRows) && (
+			<div className={`leaderboard-body${showRails ? " leaderboard-body--rails" : ""}`}>
+				{showTrending ? (
 					<section className="activity-panel activity-panel--trending" aria-labelledby="trending-heading">
 						<h2 id="trending-heading">
 							<img className="activity-heading-icon" src={trendingFire} alt="" />
 							{t("trendingTitle")}
 						</h2>
-						{trending.length === 0 ? (
-							<p className="activity-empty">{t("trendingEmpty")}</p>
-						) : (
-							<ul>
-								{trending.map((site) => (
-									<li key={site.domain}>
-										<a
-											href={site.url}
-											target="_blank"
-											rel="noreferrer"
-											onClick={() =>
-												posthog.capture("outbound_link_clicked", {
-													destination_url: site.url,
-													destination_domain: site.domain,
-													source_page: "trending",
-												})
-											}
-										>
-											<img src={site.faviconUrl} alt="" />
-											<span className="activity-domain">{site.domain}</span>
-											<span className="activity-meta">
+						<ul>
+							{trending.map((site) => (
+								<li key={site.domain}>
+									<a
+										href={site.url}
+										target="_blank"
+										rel="noreferrer"
+										onClick={() =>
+											posthog.capture("outbound_link_clicked", {
+												destination_url: site.url,
+												destination_domain: site.domain,
+												source_page: "trending",
+											})
+										}
+									>
+										<img src={site.faviconUrl} alt="" />
+										<span className="activity-domain">{site.domain}</span>
+										<span className="activity-meta">
 											{t(site.clicksPerHour === 1 ? "clicksPerHourOne" : "clicksPerHour", {
 												count: number.format(site.clicksPerHour),
 											})}
-											</span>
-										</a>
-									</li>
-								))}
-							</ul>
-						)}
+										</span>
+									</a>
+								</li>
+							))}
+						</ul>
 					</section>
+				) : showRails ? (
+					<div />
 				) : null}
 
-				{rest.length > 0 ? (
-					<div className="leaderboard-rows">
+				{showRows ? (
+					<div className={`leaderboard-rows${rest.length === 0 ? " leaderboard-rows--top-only" : ""}`}>
+						{showPodium ? (
+							<div className="leaderboard-top-list">
+								{topRanks.map((rank, index) => {
+									const product = products.find((entry) => entry.rank === rank);
+									return (
+										<Fragment key={`top-${rank}`}>
+											{index > 0 ? <Separator /> : null}
+											{product ? (
+											<LeaderboardRow product={product} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
+										) : (
+											<LeaderboardPlaceholder rank={rank} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
+											)}
+										</Fragment>
+									);
+								})}
+								{rest.length > 0 ? <Separator /> : null}
+							</div>
+						) : null}
 						{rest.map((product, index) => (
 							<Fragment key={product.id}>
 								{index > 0 ? <Separator /> : null}
-								<LeaderboardRow product={product} />
+								<LeaderboardRow product={product} onClaimRank={onClaimRank} onPreviewRank={onPreviewRank} />
 							</Fragment>
 						))}
 					</div>
-				) : (
+				) : showRails ? (
 					<div />
-				)}
+				) : null}
 
-				{showPodium ? (
+				{showLatest ? (
 					<section className="activity-panel activity-panel--latest" aria-labelledby="latest-heading">
 						<h2 id="latest-heading">
 							<Clock className="activity-heading-icon" aria-hidden="true" />
 							{t("latestActivityTitle")}
 						</h2>
-						{latest.length === 0 ? (
-							<p className="activity-empty">{t("latestEmpty")}</p>
-						) : (
-							<ul>
-								{latest.map((payment, index) => (
-									<li key={`${payment.domain}-${index}`}>
-										<a
-											href={payment.url}
-											target="_blank"
-											rel="noreferrer"
-											onClick={() =>
-												posthog.capture("outbound_link_clicked", {
-													destination_url: payment.url,
-													destination_domain: payment.domain,
-													source_page: "latest_activity",
-												})
-											}
-										>
-											<span className="activity-rank">#{payment.rank ?? "—"}</span>
-											<img src={payment.faviconUrl} alt="" />
-											<span className="activity-domain">{payment.domain}</span>
-											<span className="activity-price">{currency.format(payment.amountSen / 100)}</span>
-										</a>
-									</li>
-								))}
-							</ul>
-						)}
+						<ul>
+							{latest.map((payment, index) => (
+								<li key={`${payment.domain}-${index}`}>
+									<a
+										href={payment.url}
+										target="_blank"
+										rel="noreferrer"
+										onClick={() =>
+											posthog.capture("outbound_link_clicked", {
+												destination_url: payment.url,
+												destination_domain: payment.domain,
+												source_page: "latest_activity",
+											})
+										}
+									>
+										<span className="activity-rank">#{payment.rank ?? "—"}</span>
+										<img src={payment.faviconUrl} alt="" />
+										<span className="activity-domain">{payment.domain}</span>
+										<span className="activity-price">{currency.format(payment.amountSen / 100)}</span>
+									</a>
+								</li>
+							))}
+						</ul>
 					</section>
+				) : showRails ? (
+					<div />
 				) : null}
 			</div>
+			)}
 
-			<LeaderboardPagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={onPageChange} />
-			<TotalContribution sen={totalRaisedSen} />
+			{SHOW_TOTAL_CONTRIBUTION ? <TotalContribution sen={totalRaisedSen} /> : null}
 		</div>
 	);
 }
 
 function App() {
-	const { t, number } = useLocale();
+	const { t } = useLocale();
 	const isStatsPage = window.location.pathname === "/stats";
 	const [products, setProducts] = useState<Product[]>([]);
 	const [productTotal, setProductTotal] = useState(0);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [totalRaisedSen, setTotalRaisedSen] = useState(0);
 	const [rankingProducts, setRankingProducts] = useState<Product[]>([]);
 	const [trending, setTrending] = useState<TrendingSite[]>([]);
 	const [latest, setLatest] = useState<LatestPayment[]>([]);
-	const [page, setPage] = useState(0);
+	const loadMoreRef = useRef<HTMLDivElement>(null);
 	const [url, setUrl] = useState("");
+	const urlInputRef = useRef<HTMLInputElement>(null);
 	const [bidSen, setBidSen] = useState(MINIMUM_SEN);
 	const [bidInput, setBidInput] = useState(formatBidInput(MINIMUM_SEN));
 	const [rankInput, setRankInput] = useState("1");
+	const [hoveredRank, setHoveredRank] = useState<number | null>(null);
 	const updatingFromRank = useRef(false);
 	const [errorKey, setErrorKey] = useState<"loadLeaderboardError" | "checkoutCancelled" | "checkoutCancelProcessing" | "checkoutStartError" | null>(null);
 	const [errorRaw, setErrorRaw] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const useLiveLeaderboard = import.meta.env.DEV && new URLSearchParams(window.location.search).get("live") === "1";
+	const showDemoLeaderboard = import.meta.env.DEV && !useLiveLeaderboard;
 
 	function showTranslatedError(key: "loadLeaderboardError" | "checkoutCancelled" | "checkoutCancelProcessing" | "checkoutStartError") {
 		setErrorRaw("");
@@ -442,26 +598,34 @@ function App() {
 	useEffect(() => {
 		posthog.capture("page_viewed", { page: isStatsPage ? "stats" : "leaderboard" });
 		if (isStatsPage) return;
-		const liveLeaderboard =
-			import.meta.env.DEV && new URLSearchParams(window.location.search).get("live") === "1";
-		if (import.meta.env.DEV && !liveLeaderboard) return;
+		if (showDemoLeaderboard) return;
 
-		const offset = page * PAGE_SIZE;
-		void fetch(`/api/products?limit=${PAGE_SIZE}&offset=${offset}`)
+		let cancelled = false;
+		setProducts([]);
+		setProductTotal(0);
+		setIsLoadingMore(true);
+		void fetch(`/api/products?limit=${PAGE_SIZE}&offset=0`)
 			.then((response) => response.json() as Promise<{ products: Product[]; total: number; totalRaisedSen?: number }>)
 			.then((productData) => {
+				if (cancelled) return;
 				setProducts(productData.products);
 				setProductTotal(productData.total);
 				if (typeof productData.totalRaisedSen === "number") setTotalRaisedSen(productData.totalRaisedSen);
 			})
-			.catch(() => showTranslatedError("loadLeaderboardError"));
-	}, [isStatsPage, page]);
+			.catch(() => {
+				if (!cancelled) showTranslatedError("loadLeaderboardError");
+			})
+			.finally(() => {
+				if (!cancelled) setIsLoadingMore(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [isStatsPage, showDemoLeaderboard]);
 
 	useEffect(() => {
 		if (isStatsPage) return;
-		const liveLeaderboard =
-			import.meta.env.DEV && new URLSearchParams(window.location.search).get("live") === "1";
-		if (import.meta.env.DEV && !liveLeaderboard) return;
+		if (showDemoLeaderboard) return;
 
 		void fetch("/api/products?limit=100&offset=0")
 			.then((response) => response.json() as Promise<{ products: Product[] }>)
@@ -480,7 +644,7 @@ function App() {
 				setTrending([]);
 				setLatest([]);
 			});
-	}, [isStatsPage]);
+	}, [isStatsPage, showDemoLeaderboard]);
 
 	useEffect(() => {
 		const search = new URLSearchParams(window.location.search);
@@ -516,13 +680,7 @@ function App() {
 	useEffect(() => {
 		setFaviconFailed(false);
 	}, [previewDomain]);
-	const useLiveLeaderboard = import.meta.env.DEV && new URLSearchParams(window.location.search).get("live") === "1";
-	const showDemoLeaderboard = import.meta.env.DEV && !useLiveLeaderboard;
-	const displayProducts = showDemoLeaderboard
-		? DEMO_PRODUCTS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-		: products;
-	const displayTotal = showDemoLeaderboard ? DEMO_PRODUCTS.length : productTotal;
-	const displayPage = page;
+	const displayProducts = showDemoLeaderboard ? DEMO_PRODUCTS : products;
 	const displayTrending = showDemoLeaderboard ? DEMO_TRENDING : trending;
 	const displayLatest = showDemoLeaderboard ? DEMO_LATEST : latest;
 	const displayRaisedSen = showDemoLeaderboard ? DEMO_RAISED_SEN : totalRaisedSen;
@@ -542,18 +700,44 @@ function App() {
 		[effectiveBidSen, rankingTotalsForBid],
 	);
 	const maxRank = Math.max(rankingTotalsForBid.length + 1, 1);
+	const parsedRankInput = Number(rankInput);
+	const claimRank =
+		rankInput.trim() !== "" && Number.isFinite(parsedRankInput)
+			? normalizeRankInput(parsedRankInput, maxRank)
+			: projectedRank;
+	const rankPreview = useMemo(() => {
+		if (hoveredRank == null) return null;
+		return claimPreviewForRank(
+			normalizeRankInput(hoveredRank, maxRank),
+			rankingTotalsForBid,
+			{
+				excludeTotalSen: matchedListing?.totalPaidSen ?? null,
+				minimumSen: MINIMUM_SEN,
+			},
+		);
+	}, [hoveredRank, matchedListing?.totalPaidSen, maxRank, rankingTotalsForBid]);
+	const displayedRankInput = rankPreview ? String(rankPreview.rank) : rankInput;
+	const displayedBidInput = rankPreview ? formatBidInput(rankPreview.bidSen) : bidInput;
+	const displayedClaimRank = rankPreview?.rank ?? claimRank;
 
 	function commitRankInput(rawValue = rankInput) {
 		const nextRank = normalizeRankInput(Number(rawValue), maxRank);
-		const nextSen = minimumTotalForRank(nextRank, rankingTotalsForBid, {
+		const preview = claimPreviewForRank(nextRank, rankingTotalsForBid, {
 			excludeTotalSen: matchedListing?.totalPaidSen ?? null,
 			minimumSen: MINIMUM_SEN,
 		});
 		updatingFromRank.current = true;
-		setBidSen(nextSen);
-		setBidInput(formatBidInput(nextSen));
+		setBidSen(preview.bidSen);
+		setBidInput(formatBidInput(preview.bidSen));
 		setRankInput(String(nextRank));
 		return nextRank;
+	}
+
+	function claimSpot(rank: number) {
+		commitRankInput(String(rank));
+		const field = urlInputRef.current;
+		field?.focus({ preventScroll: true });
+		field?.scrollIntoView({ behavior: "smooth", block: "center" });
 	}
 
 	useEffect(() => {
@@ -564,10 +748,33 @@ function App() {
 		setRankInput(String(projectedRank));
 	}, [projectedRank]);
 
-	const handlePageChange = (nextPage: number) => {
-		setPage(Math.max(0, nextPage));
-		window.scrollTo({ top: 0, behavior: "smooth" });
-	};
+	const hasMoreProducts = !showDemoLeaderboard && productTotal > products.length;
+
+	useEffect(() => {
+		const sentinel = loadMoreRef.current;
+		if (isStatsPage || !sentinel || !hasMoreProducts || isLoadingMore) return;
+
+		const observer = new IntersectionObserver((entries) => {
+			if (!entries[0]?.isIntersecting) return;
+			observer.unobserve(sentinel);
+			setIsLoadingMore(true);
+			const offset = products.length;
+			void fetch(`/api/products?limit=${PAGE_SIZE}&offset=${offset}`)
+				.then((response) => {
+					if (!response.ok) throw new Error("Unable to load more products");
+					return response.json() as Promise<{ products: Product[]; total: number }>;
+				})
+				.then((productData) => {
+					setProducts((current) => appendLeaderboardPage(current, productData.products));
+					setProductTotal(productData.total);
+				})
+				.catch(() => showTranslatedError("loadLeaderboardError"))
+				.finally(() => setIsLoadingMore(false));
+		});
+
+		observer.observe(sentinel);
+		return () => observer.disconnect();
+	}, [hasMoreProducts, isLoadingMore, isStatsPage, products.length]);
 
 	async function startCheckout(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -611,7 +818,7 @@ function App() {
 									inputMode="numeric"
 									autoComplete="off"
 									spellCheck={false}
-									value={rankInput}
+									value={displayedRankInput}
 									onChange={(event) => setRankInput(event.target.value.replace(/\D/g, ""))}
 									onBlur={() => commitRankInput()}
 									onKeyDown={(event) => {
@@ -647,7 +854,7 @@ function App() {
 										inputMode="decimal"
 										autoComplete="off"
 										spellCheck={false}
-										value={bidInput}
+										value={displayedBidInput}
 										onChange={(event) => setBidInput(event.target.value.replace(/[^\d.]/g, ""))}
 										onBlur={() => commitBidInput()}
 										onKeyDown={(event) => {
@@ -682,6 +889,7 @@ function App() {
 								<Globe className="url-field-icon" aria-hidden="true" />
 							)}
 							<input
+								ref={urlInputRef}
 								required
 								type="text"
 								inputMode="url"
@@ -691,28 +899,21 @@ function App() {
 							/>
 						</label>
 						<button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? t("opening") : t("claim")}
+							{isSubmitting ? t("opening") : t("claim", { rank: displayedClaimRank })}
 						</button>
 					</div>
-					{displayTotal > 0 ? (
-						<p className="listing-count">
-							{t(displayTotal === 1 ? "listingsOne" : "listingsMany", {
-								count: number.format(displayTotal),
-							})}
-						</p>
-					) : null}
 					{(errorRaw || errorKey) && <p className="form-error">{errorRaw || (errorKey ? t(errorKey) : "")}</p>}
 				</form>
 
 				<Leaderboard
 					products={displayProducts}
-					total={displayTotal}
-					page={displayPage}
-					onPageChange={handlePageChange}
 					trending={displayTrending}
 					latest={displayLatest}
 					totalRaisedSen={displayRaisedSen}
+					onClaimRank={claimSpot}
+					onPreviewRank={setHoveredRank}
 				/>
+				{hasMoreProducts ? <div ref={loadMoreRef} className="leaderboard-load-more" aria-hidden="true" /> : null}
 			</section>
 			<Footer />
 		</main>

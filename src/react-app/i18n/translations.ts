@@ -13,6 +13,8 @@ export const LOCALE_STORAGE_KEY = "mytawaran-locale";
 type Messages = {
 	documentTitle: string;
 	navMain: string;
+	navMenuOpen: string;
+	navMenuClose: string;
 	navLeaderboard: string;
 	navStats: string;
 	language: string;
@@ -34,6 +36,8 @@ type Messages = {
 	clicksOne: string;
 	clicksMany: string;
 	rankAvailable: string;
+	podiumUnclaimed: string;
+	podiumCouldBeYours: string;
 	loadLeaderboardError: string;
 	checkoutCancelled: string;
 	checkoutCancelProcessing: string;
@@ -45,14 +49,24 @@ type Messages = {
 	latestActivityTitle: string;
 	clicksPerHour: string;
 	clicksPerHourOne: string;
-	trendingEmpty: string;
-	latestEmpty: string;
 	statsEyebrow: string;
 	statsTitle: string;
 	statsDescription: string;
 	statsEmptyTitle: string;
 	statsEmptyBody: string;
-	statsIframeTitle: string;
+	statsLoadError: string;
+	statsRangeLabel: string;
+	statsRange24h: string;
+	statsRange7d: string;
+	statsRequests: string;
+	statsVisits: string;
+	statsBandwidth: string;
+	statsErrorRate: string;
+	statsTrafficTitle: string;
+	statsCountriesTitle: string;
+	statsPathsTitle: string;
+	statsRequestsSeries: string;
+	statsVisitsSeries: string;
 	paginationAria: string;
 	paginationPrevious: string;
 	paginationNext: string;
@@ -68,12 +82,14 @@ export const translations: Record<Locale, Messages> = {
 	en: {
 		documentTitle: "mytawaran — claim your corner of the internet",
 		navMain: "Main navigation",
-		navLeaderboard: "Leaderboard",
+		navMenuOpen: "Open menu",
+		navMenuClose: "Close menu",
+		navLeaderboard: "Home",
 		navStats: "Stats",
 		language: "Language",
 		aboutTrigger: "What is mytawaran?",
 		aboutTitle: "What is MyTawaran?",
-		aboutDescription: "A paid leaderboard for Malaysian products. Pay to claim rank, outbid others, and drive traffic to your site. Minimum bid is RM2.",
+		aboutDescription: "Offer your product. Minimum RM2. If your spot has been claimed, reclaim it by paying only the difference!",
 		aboutRules: [
 			{
 				title: "Set the rank or the amount",
@@ -97,30 +113,42 @@ export const translations: Record<Locale, Messages> = {
 		bidAmount: "Bid amount in MYR",
 		websiteUrl: "Website URL",
 		productUrlPlaceholder: "Your product URL",
-		claim: "Claim",
+		claim: "Claim #{rank}",
 		opening: "Opening…",
 		clicksOne: "{count} click",
 		clicksMany: "{count} clicks",
 		rankAvailable: "Rank {rank} available",
+		podiumUnclaimed: "No one claimed it yet.",
+		podiumCouldBeYours: "It could be yours.",
 		loadLeaderboardError: "Unable to load the live leaderboard.",
 		checkoutCancelled: "Checkout cancelled. No placement was changed.",
 		checkoutCancelProcessing: "Checkout cancellation is still processing. Reload to retry.",
 		checkoutStartError: "Unable to start checkout.",
-		listingsOne: "{count} product tawared on mytawaran",
-		listingsMany: "{count} products tawared on mytawaran",
+		listingsOne: "{count} other has tawared",
+		listingsMany: "{count} others have tawared",
 		totalContribution: "Total Tawared so far",
 		trendingTitle: "Trending",
 		latestActivityTitle: "Latest activity",
 		clicksPerHourOne: "{count} click / hour",
 		clicksPerHour: "{count} clicks / hour",
-		trendingEmpty: "No click data yet.",
-		latestEmpty: "No payments yet.",
-		statsEyebrow: "MyTawaran analytics",
-		statsTitle: "How the board is moving.",
-		statsDescription: "Traffic and outbound website clicks are measured with PostHog.",
-		statsEmptyTitle: "Stats are nearly ready.",
-		statsEmptyBody: "Set VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL to the public PostHog dashboard embed URL.",
-		statsIframeTitle: "MyTawaran stats",
+		statsEyebrow: "Cloudflare analytics",
+		statsTitle: "How the data is moving.",
+		statsDescription: "Live edge traffic for mytawaran.com from the Cloudflare GraphQL Analytics API.",
+		statsEmptyTitle: "Analytics token missing.",
+		statsEmptyBody: "Set CF_ANALYTICS_API_TOKEN (Zone Analytics Read) in .dev.vars or as a Worker secret.",
+		statsLoadError: "Unable to load Cloudflare analytics.",
+		statsRangeLabel: "Time range",
+		statsRange24h: "24 hours",
+		statsRange7d: "7 days",
+		statsRequests: "Requests",
+		statsVisits: "Visits",
+		statsBandwidth: "Bandwidth",
+		statsErrorRate: "4xx / 5xx",
+		statsTrafficTitle: "Requests and visits",
+		statsCountriesTitle: "Top countries",
+		statsPathsTitle: "Top paths",
+		statsRequestsSeries: "Requests",
+		statsVisitsSeries: "Visits",
 		paginationAria: "Pagination",
 		paginationPrevious: "Previous",
 		paginationNext: "Next",
@@ -134,12 +162,14 @@ export const translations: Record<Locale, Messages> = {
 	ms: {
 		documentTitle: "mytawaran — tuntut sudut internet anda",
 		navMain: "Navigasi utama",
-		navLeaderboard: "Kedudukan",
+		navMenuOpen: "Buka menu",
+		navMenuClose: "Tutup menu",
+		navLeaderboard: "Utama",
 		navStats: "Statistik",
 		language: "Bahasa",
 		aboutTrigger: "Apa itu mytawaran?",
 		aboutTitle: "Apa itu MyTawaran?",
-		aboutDescription: "Papan kedudukan berbayar untuk produk Malaysia. Bayar untuk tuntut ranking, atasi tawaran lain, dan hantar trafik ke tapak anda. Tawaran minimum ialah RM2.",
+		aboutDescription: "Tawarkan produk anda. Minimum RM2. Jika spot anda telah dituntut, tuntut semula dengan hanya membayar perbezaannya!",
 		aboutRules: [
 			{
 				title: "Tetapkan ranking atau jumlah",
@@ -163,30 +193,42 @@ export const translations: Record<Locale, Messages> = {
 		bidAmount: "Jumlah tawaran dalam MYR",
 		websiteUrl: "URL tapak web",
 		productUrlPlaceholder: "URL produk anda",
-		claim: "Tuntut",
+		claim: "Tuntut #{rank}",
 		opening: "Membuka…",
 		clicksOne: "{count} klik",
 		clicksMany: "{count} klik",
 		rankAvailable: "Ranking {rank} masih kosong",
+		podiumUnclaimed: "Belum ada yang tuntut.",
+		podiumCouldBeYours: "Ini boleh jadi milik anda.",
 		loadLeaderboardError: "Tidak dapat memuatkan papan kedudukan langsung.",
 		checkoutCancelled: "Pembayaran dibatalkan. Tiada kedudukan diubah.",
 		checkoutCancelProcessing: "Pembatalan pembayaran masih diproses. Muat semula untuk cuba lagi.",
 		checkoutStartError: "Tidak dapat mulakan pembayaran.",
-		listingsOne: "{count} produk ditawarkan di mytawaran",
-		listingsMany: "{count} produk ditawarkan di mytawaran",
+		listingsOne: "{count} yang lain telah tawar",
+		listingsMany: "{count} yang lain telah tawar",
 		totalContribution: "Jumlah ditawarkan setakat ini",
 		trendingTitle: "Sedang hangat",
 		latestActivityTitle: "Aktiviti terkini",
 		clicksPerHourOne: "{count} klik / jam",
 		clicksPerHour: "{count} klik / jam",
-		trendingEmpty: "Belum ada data klik.",
-		latestEmpty: "Belum ada pembayaran.",
-		statsEyebrow: "Analitik MyTawaran",
-		statsTitle: "Bagaimana papan sedang bergerak.",
-		statsDescription: "Trafik dan klik keluar ke tapak web diukur dengan PostHog.",
-		statsEmptyTitle: "Statistik hampir sedia.",
-		statsEmptyBody: "Tetapkan VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL kepada URL embed papan pemuka PostHog awam.",
-		statsIframeTitle: "Statistik MyTawaran",
+		statsEyebrow: "Analitik Cloudflare",
+		statsTitle: "Bagaimana data sedang bergerak.",
+		statsDescription: "Trafik tepi langsung untuk mytawaran.com daripada API Analitik GraphQL Cloudflare.",
+		statsEmptyTitle: "Token analitik tiada.",
+		statsEmptyBody: "Tetapkan CF_ANALYTICS_API_TOKEN (Zone Analytics Read) dalam .dev.vars atau sebagai rahsia Worker.",
+		statsLoadError: "Tidak dapat memuatkan analitik Cloudflare.",
+		statsRangeLabel: "Julat masa",
+		statsRange24h: "24 jam",
+		statsRange7d: "7 hari",
+		statsRequests: "Permintaan",
+		statsVisits: "Lawatan",
+		statsBandwidth: "Lebar jalur",
+		statsErrorRate: "4xx / 5xx",
+		statsTrafficTitle: "Permintaan dan lawatan",
+		statsCountriesTitle: "Negara teratas",
+		statsPathsTitle: "Laluan teratas",
+		statsRequestsSeries: "Permintaan",
+		statsVisitsSeries: "Lawatan",
 		paginationAria: "Penomboran halaman",
 		paginationPrevious: "Sebelum",
 		paginationNext: "Seterusnya",
@@ -200,12 +242,14 @@ export const translations: Record<Locale, Messages> = {
 	zh: {
 		documentTitle: "mytawaran — 抢占你的网络一席",
 		navMain: "主导航",
-		navLeaderboard: "排行榜",
+		navMenuOpen: "打开菜单",
+		navMenuClose: "关闭菜单",
+		navLeaderboard: "首页",
 		navStats: "数据",
 		language: "语言",
 		aboutTrigger: "什么是 mytawaran？",
 		aboutTitle: "什么是 MyTawaran？",
-		aboutDescription: "面向马来西亚产品的付费排行榜。付款抢占排名，出价超过他人，为你的网站带来流量。最低出价为 RM2。",
+		aboutDescription: "推广您的产品。最低 RM2。若您的名额已被占用，只需支付差额即可重新夺回！",
 		aboutRules: [
 			{
 				title: "设定排名或金额",
@@ -229,30 +273,42 @@ export const translations: Record<Locale, Messages> = {
 		bidAmount: "出价金额（马币）",
 		websiteUrl: "网站网址",
 		productUrlPlaceholder: "你的产品网址",
-		claim: "抢占",
+		claim: "抢占 #{rank}",
 		opening: "正在打开…",
 		clicksOne: "{count} 次点击",
 		clicksMany: "{count} 次点击",
 		rankAvailable: "第 {rank} 名可抢占",
+		podiumUnclaimed: "还没人抢占。",
+		podiumCouldBeYours: "这席位可以是你的。",
 		loadLeaderboardError: "无法加载实时排行榜。",
 		checkoutCancelled: "已取消结账。排名未被更改。",
 		checkoutCancelProcessing: "取消结账仍在处理中。请刷新后重试。",
 		checkoutStartError: "无法开始结账。",
-		listingsOne: "已有 {count} 个产品在 mytawaran 出价",
-		listingsMany: "已有 {count} 个产品在 mytawaran 出价",
+		listingsOne: "已有 {count} 人出价",
+		listingsMany: "已有 {count} 人出价",
 		totalContribution: "至今总出价",
 		trendingTitle: "热门",
 		latestActivityTitle: "最新动态",
 		clicksPerHourOne: "{count} 次点击 / 小时",
 		clicksPerHour: "{count} 次点击 / 小时",
-		trendingEmpty: "暂无点击数据。",
-		latestEmpty: "暂无付款记录。",
-		statsEyebrow: "MyTawaran 数据分析",
-		statsTitle: "排行榜正在如何变化。",
-		statsDescription: "流量与外链点击由 PostHog 统计。",
-		statsEmptyTitle: "数据面板即将就绪。",
-		statsEmptyBody: "请将 VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL 设为公开的 PostHog 仪表板嵌入网址。",
-		statsIframeTitle: "MyTawaran 数据",
+		statsEyebrow: "Cloudflare 分析",
+		statsTitle: "数据正在如何变化。",
+		statsDescription: "来自 Cloudflare GraphQL Analytics API 的 mytawaran.com 边缘流量。",
+		statsEmptyTitle: "缺少分析令牌。",
+		statsEmptyBody: "请在 .dev.vars 或 Worker secret 中设置 CF_ANALYTICS_API_TOKEN（Zone Analytics Read）。",
+		statsLoadError: "无法加载 Cloudflare 分析。",
+		statsRangeLabel: "时间范围",
+		statsRange24h: "24 小时",
+		statsRange7d: "7 天",
+		statsRequests: "请求",
+		statsVisits: "访问",
+		statsBandwidth: "带宽",
+		statsErrorRate: "4xx / 5xx",
+		statsTrafficTitle: "请求与访问",
+		statsCountriesTitle: "热门国家",
+		statsPathsTitle: "热门路径",
+		statsRequestsSeries: "请求",
+		statsVisitsSeries: "访问",
 		paginationAria: "分页",
 		paginationPrevious: "上一页",
 		paginationNext: "下一页",

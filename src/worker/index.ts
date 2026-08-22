@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { fetchCloudflareAnalytics, parseAnalyticsRange } from "./cloudflare-analytics";
 import {
 	buildCheckoutCopy,
 	calculateContributionDue,
@@ -11,6 +12,8 @@ type Bindings = {
 	STRIPE_SECRET_KEY?: string;
 	STRIPE_WEBHOOK_SECRET?: string;
 	APP_ORIGIN?: string;
+	CF_ZONE_ID?: string;
+	CF_ANALYTICS_API_TOKEN?: string;
 };
 
 type ProductRow = {
@@ -215,6 +218,34 @@ app.get("/api/stats", async (c) => {
 		totalRaisedSen: raisedRow?.total ?? 0,
 		listingCount: raisedRow?.listings ?? 0,
 	});
+});
+
+app.get("/api/cloudflare-analytics", async (c) => {
+	const token = c.env.CF_ANALYTICS_API_TOKEN;
+	const zoneTag = c.env.CF_ZONE_ID;
+	if (!token || !zoneTag) {
+		return c.json(jsonError("Cloudflare analytics is not configured", 503), 503);
+	}
+
+	const range = parseAnalyticsRange(c.req.query("range"));
+	const cache = caches.default;
+	const cacheKey = new Request(new URL(`/api/cloudflare-analytics?range=${range}`, c.req.url).toString(), {
+		method: "GET",
+	});
+	const cached = await cache.match(cacheKey);
+	if (cached) return cached;
+
+	try {
+		const analytics = await fetchCloudflareAnalytics(token, zoneTag, range);
+		const response = c.json(analytics, 200, {
+			"Cache-Control": "public, max-age=300",
+		});
+		c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+		return response;
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unable to load Cloudflare analytics";
+		return c.json(jsonError(message, 502), 502);
+	}
 });
 
 app.get("/api/products", async (c) => {

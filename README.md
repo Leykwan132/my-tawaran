@@ -64,6 +64,7 @@ and never commit them to source control:
 ```bash
 npx wrangler secret put STRIPE_SECRET_KEY
 npx wrangler secret put STRIPE_WEBHOOK_SECRET
+npx wrangler secret put CF_ANALYTICS_API_TOKEN
 ```
 
 `STRIPE_SECRET_KEY` should be a Stripe restricted API key that can create and
@@ -88,12 +89,12 @@ deployment environment:
 ```text
 VITE_PUBLIC_POSTHOG_KEY=phc_...
 VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL=https://app.posthog.com/embedded/...
 ```
 
-The Stats page uses the final value to display a public PostHog dashboard.
-Create an insight for `outbound_link_clicked`, grouped by
-`destination_url`, alongside MyTawaran page-view traffic.
+The Stats page charts Cloudflare HTTP analytics for `mytawaran.com` through
+the GraphQL Analytics API. Create a token with **Zone Analytics: Read**, then
+set `CF_ANALYTICS_API_TOKEN` locally in `.dev.vars` and as a production secret.
+The zone ID is already in `wrangler.json` as `CF_ZONE_ID`.
 
 Apply the schema before a deployment that serves checkout traffic:
 
