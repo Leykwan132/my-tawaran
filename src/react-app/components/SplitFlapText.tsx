@@ -176,22 +176,21 @@ export default function SplitFlapText({
 			const fromPhrase = normalizePhrase(currentTextRef.current, width);
 			const targetChars = targetPhrase.split("");
 
-			const plans = targetChars
-				.map((targetChar, index) => {
-					const fromChar = fromPhrase[index] || " ";
-					if (fromChar === targetChar) return null;
+			const plans: FlipPlan[] = [];
+			targetChars.forEach((targetChar, index) => {
+				const fromChar = fromPhrase[index] || " ";
+				if (fromChar === targetChar) return;
 
-					return {
-						index,
-						from: fromChar,
-						target: targetChar,
-						sequence: buildSequence(targetChar, safeFlips, activeCharset),
-						start: index * safeStaggerMs,
-						step: -1,
-						done: false,
-					} satisfies FlipPlan;
-				})
-				.filter((plan): plan is FlipPlan => plan != null);
+				plans.push({
+					index,
+					from: fromChar,
+					target: targetChar,
+					sequence: buildSequence(targetChar, safeFlips, activeCharset),
+					start: index * safeStaggerMs,
+					step: -1,
+					done: false,
+				});
+			});
 
 			if (!plans.length) {
 				currentTextRef.current = targetPhrase;
