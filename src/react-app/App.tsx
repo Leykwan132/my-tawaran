@@ -1,5 +1,5 @@
 import { FormEvent, Fragment, useEffect, useMemo, useRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
-import { Globe } from "lucide-react";
+import { Clock, Globe } from "lucide-react";
 import posthog from "posthog-js";
 import { AboutMytawaranDialog } from "@/components/about-mytawaran-dialog";
 import { LanguageSwitch } from "@/components/language-switch";
@@ -8,13 +8,14 @@ import { Separator } from "@/components/ui/separator";
 import { useLocale } from "@/i18n/locale-provider";
 import {
 	projectRank,
-	calculateListingTopUpSen,
 	minimumTotalForRank,
 	MINIMUM_SEN,
 } from "../worker/ranking";
-import { DEMO_PRODUCTS, DEMO_TRENDING, DEMO_LATEST, type LatestPayment, type Product, type TrendingSite } from "@/demo-products";
+import { DEMO_PRODUCTS, DEMO_TRENDING, DEMO_LATEST, DEMO_RAISED_SEN, type LatestPayment, type Product, type TrendingSite } from "@/demo-products";
+import SplitFlapText from "@/components/SplitFlapText";
 import logo from "./assets/mytawaran-hibiscus.png";
 import malaysiaFlag from "./assets/malaysia-flag.png";
+import trendingFire from "./assets/trending-fire.png";
 import "./App.css";
 
 const BID_STEP_SEN = 100;
@@ -237,6 +238,37 @@ function LeaderboardRow({ product }: { product: Product }) {
 	);
 }
 
+function formatContributionBoard(sen: number) {
+	return `RM ${Math.max(0, Math.round(sen / 100))}`;
+}
+
+function TotalContribution({ sen }: { sen: number }) {
+	const { t } = useLocale();
+	const formatted = formatContributionBoard(sen);
+	const zeroed = formatContributionBoard(0);
+
+	return (
+		<div className="total-contribution">
+			<p className="total-contribution-label">{t("totalContribution")}</p>
+			<SplitFlapText
+				words={formatted === zeroed ? [formatted] : [zeroed, formatted]}
+				loop={false}
+				charset="0123456789RM "
+				padTo={Math.max(formatted.length, zeroed.length)}
+				flipDuration={0.1}
+				stagger={0.05}
+				cycleDelay={480}
+				flipsPerChar={5}
+				tileColor="#211b17"
+				textColor="#fff8ef"
+				tileRadius={8}
+				gap={6}
+				fontSize={48}
+			/>
+		</div>
+	);
+}
+
 function Leaderboard({
 	products,
 	total,
@@ -244,6 +276,7 @@ function Leaderboard({
 	onPageChange,
 	trending,
 	latest,
+	totalRaisedSen,
 }: {
 	products: Product[];
 	total: number;
@@ -251,12 +284,19 @@ function Leaderboard({
 	onPageChange: (page: number) => void;
 	trending: TrendingSite[];
 	latest: LatestPayment[];
+	totalRaisedSen: number;
 }) {
 	const showPodium = page === 0;
 	const rest = showPodium ? products.filter((product) => product.rank > 3) : products;
 	const { t, currency, number } = useLocale();
 
-	if (products.length === 0 && total === 0) return null;
+	if (products.length === 0 && total === 0) {
+		return (
+			<div className="leaderboard">
+				<TotalContribution sen={totalRaisedSen} />
+			</div>
+		);
+	}
 
 	const podiumOrder = [2, 1, 3] as const;
 
@@ -277,7 +317,10 @@ function Leaderboard({
 			<div className={`leaderboard-body${showPodium ? " leaderboard-body--rails" : ""}`}>
 				{showPodium ? (
 					<section className="activity-panel activity-panel--trending" aria-labelledby="trending-heading">
-						<h2 id="trending-heading">{t("trendingTitle")}</h2>
+						<h2 id="trending-heading">
+							<img className="activity-heading-icon" src={trendingFire} alt="" />
+							{t("trendingTitle")}
+						</h2>
 						{trending.length === 0 ? (
 							<p className="activity-empty">{t("trendingEmpty")}</p>
 						) : (
@@ -326,7 +369,10 @@ function Leaderboard({
 
 				{showPodium ? (
 					<section className="activity-panel activity-panel--latest" aria-labelledby="latest-heading">
-						<h2 id="latest-heading">{t("latestActivityTitle")}</h2>
+						<h2 id="latest-heading">
+							<Clock className="activity-heading-icon" aria-hidden="true" />
+							{t("latestActivityTitle")}
+						</h2>
 						{latest.length === 0 ? (
 							<p className="activity-empty">{t("latestEmpty")}</p>
 						) : (
@@ -359,6 +405,7 @@ function Leaderboard({
 			</div>
 
 			<LeaderboardPagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={onPageChange} />
+			<TotalContribution sen={totalRaisedSen} />
 		</div>
 	);
 }
@@ -368,6 +415,7 @@ function App() {
 	const isStatsPage = window.location.pathname === "/stats";
 	const [products, setProducts] = useState<Product[]>([]);
 	const [productTotal, setProductTotal] = useState(0);
+	const [totalRaisedSen, setTotalRaisedSen] = useState(0);
 	const [rankingProducts, setRankingProducts] = useState<Product[]>([]);
 	const [trending, setTrending] = useState<TrendingSite[]>([]);
 	const [latest, setLatest] = useState<LatestPayment[]>([]);
@@ -400,10 +448,11 @@ function App() {
 
 		const offset = page * PAGE_SIZE;
 		void fetch(`/api/products?limit=${PAGE_SIZE}&offset=${offset}`)
-			.then((response) => response.json() as Promise<{ products: Product[]; total: number }>)
+			.then((response) => response.json() as Promise<{ products: Product[]; total: number; totalRaisedSen?: number }>)
 			.then((productData) => {
 				setProducts(productData.products);
 				setProductTotal(productData.total);
+				if (typeof productData.totalRaisedSen === "number") setTotalRaisedSen(productData.totalRaisedSen);
 			})
 			.catch(() => showTranslatedError("loadLeaderboardError"));
 	}, [isStatsPage, page]);
@@ -476,6 +525,7 @@ function App() {
 	const displayPage = page;
 	const displayTrending = showDemoLeaderboard ? DEMO_TRENDING : trending;
 	const displayLatest = showDemoLeaderboard ? DEMO_LATEST : latest;
+	const displayRaisedSen = showDemoLeaderboard ? DEMO_RAISED_SEN : totalRaisedSen;
 	const catalogProducts = showDemoLeaderboard ? DEMO_PRODUCTS : rankingProducts;
 	const rankingTotalsForBid = catalogProducts.map((product) => product.totalPaidSen);
 	const matchedListing = useMemo(() => {
@@ -487,10 +537,6 @@ function App() {
 		if (bidInput.trim() === "" || !Number.isFinite(parsed)) return bidSen;
 		return normalizeBidSen(parsed);
 	}, [bidInput, bidSen]);
-	const displayAmountSen = useMemo(
-		() => calculateListingTopUpSen(effectiveBidSen, matchedListing?.totalPaidSen ?? null),
-		[effectiveBidSen, matchedListing],
-	);
 	const projectedRank = useMemo(
 		() => projectRank(effectiveBidSen, rankingTotalsForBid),
 		[effectiveBidSen, rankingTotalsForBid],
@@ -665,6 +711,7 @@ function App() {
 					onPageChange={handlePageChange}
 					trending={displayTrending}
 					latest={displayLatest}
+					totalRaisedSen={displayRaisedSen}
 				/>
 			</section>
 			<Footer />

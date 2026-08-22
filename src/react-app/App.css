@@ -266,6 +266,25 @@ nav a:hover,
 	line-height: 1.55;
 }
 
+.about-claim-bar {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	margin: 8px 0 10px;
+	border-radius: 12px;
+}
+
+.about-mytawaran-note {
+	margin: 0;
+	padding: 10px 12px;
+	color: #5c534c;
+	font-size: 0.82rem;
+	line-height: 1.5;
+	background: var(--brand-yellow-soft);
+	border-radius: 10px;
+}
+
 .hero-headline {
 	display: flex;
 	flex-wrap: nowrap;
@@ -902,12 +921,29 @@ nav a:hover,
 }
 
 .activity-panel h2 {
+	display: flex;
+	align-items: center;
+	gap: 7px;
 	margin: 0 0 12px;
 	color: #211b17;
 	font-size: 0.84rem;
 	font-weight: 750;
 	letter-spacing: 0.04em;
+	line-height: 1;
 	text-transform: uppercase;
+}
+
+.activity-heading-icon {
+	display: block;
+	width: 1em;
+	height: 1em;
+	flex: 0 0 auto;
+	object-fit: contain;
+	object-position: center;
+	background: none;
+	border-radius: 0;
+	color: inherit;
+	stroke-width: 2.25;
 }
 
 .activity-panel ul {
@@ -950,7 +986,7 @@ nav a:hover,
 	border-bottom: 0;
 }
 
-.activity-panel img {
+.activity-panel li img {
 	width: 22px;
 	height: 22px;
 	border-radius: 5px;
@@ -1059,6 +1095,35 @@ nav a:hover,
 	text-align: center;
 	color: #8a8178;
 	font-size: 0.78rem;
+}
+
+.total-contribution {
+	display: grid;
+	justify-items: center;
+	gap: 22px;
+	box-sizing: border-box;
+	width: var(--board-width, 900px);
+	max-width: 100%;
+	margin: 28px auto 8px;
+	padding: 120px 24px 128px;
+	text-align: center;
+	background: #f3eee7;
+	border: 1px solid #eee6de;
+	border-radius: 16px;
+}
+
+.total-contribution-label {
+	margin: 0;
+	color: #746c64;
+	font-size: 0.82rem;
+	font-weight: 750;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.total-contribution .split-flap-text {
+	justify-content: center;
+	flex-wrap: wrap;
 }
 
 .listing-count {

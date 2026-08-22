@@ -20,6 +20,7 @@ type Messages = {
 	aboutTitle: string;
 	aboutDescription: string;
 	aboutRules: Array<{ title: string; description: string }>;
+	aboutTopUpNote: string;
 	heroClaim: string;
 	heroFor: string;
 	targetRank: string;
@@ -39,6 +40,7 @@ type Messages = {
 	checkoutStartError: string;
 	listingsOne: string;
 	listingsMany: string;
+	totalContribution: string;
 	trendingTitle: string;
 	latestActivityTitle: string;
 	clicksPerHour: string;
@@ -74,22 +76,19 @@ export const translations: Record<Locale, Messages> = {
 		aboutDescription: "A paid leaderboard for Malaysian products. Pay to claim rank, outbid others, and drive traffic to your site. Minimum bid is RM2.",
 		aboutRules: [
 			{
-				title: "Claim your spot",
-				description: "Enter your product URL and choose how much you want on the board. Minimum bid is RM2.",
+				title: "Set the rank or the amount",
+				description: "Choose the rank you want, or how much you want to pay. Minimum bid is RM2.",
 			},
 			{
-				title: "Rank by contribution",
-				description: "Higher totals rank higher. The top 3 sit on the podium; everyone else appears in the list below.",
+				title: "Enter product URL",
+				description: "Paste the website you want on the board.",
 			},
 			{
-				title: "Top up to move up",
-				description: "Already listed? You only pay the difference to reach your new target rank.",
-			},
-			{
-				title: "Get the clicks",
-				description: "Each listing links straight to your site. Clicks are tracked so you can see what the board sends you.",
+				title: "Claim!",
+				description: "Pay to lock in that spot.",
 			},
 		],
+		aboutTopUpNote: "If you're moving up with the same product, you only pay the difference to move up.",
 		heroClaim: "Claim",
 		heroFor: "for",
 		targetRank: "Target rank",
@@ -109,6 +108,7 @@ export const translations: Record<Locale, Messages> = {
 		checkoutStartError: "Unable to start checkout.",
 		listingsOne: "{count} product tawared on mytawaran",
 		listingsMany: "{count} products tawared on mytawaran",
+		totalContribution: "Total Tawared so far",
 		trendingTitle: "Trending",
 		latestActivityTitle: "Latest activity",
 		clicksPerHourOne: "{count} click / hour",
@@ -142,22 +142,19 @@ export const translations: Record<Locale, Messages> = {
 		aboutDescription: "Papan kedudukan berbayar untuk produk Malaysia. Bayar untuk tuntut ranking, atasi tawaran lain, dan hantar trafik ke tapak anda. Tawaran minimum ialah RM2.",
 		aboutRules: [
 			{
-				title: "Tuntut tempat anda",
-				description: "Masukkan URL produk dan pilih jumlah di papan. Tawaran minimum ialah RM2.",
+				title: "Tetapkan ranking atau jumlah",
+				description: "Pilih ranking yang anda mahu, atau berapa yang anda mahu bayar. Tawaran minimum ialah RM2.",
 			},
 			{
-				title: "Ranking mengikut sumbangan",
-				description: "Jumlah lebih tinggi, ranking lebih tinggi. 3 teratas di podium; yang lain dalam senarai di bawah.",
+				title: "Masukkan URL produk",
+				description: "Tampal tapak web yang anda mahu di papan.",
 			},
 			{
-				title: "Tambah nilai untuk naik",
-				description: "Sudah tersenarai? Anda hanya bayar beza untuk mencapai ranking sasaran baharu.",
-			},
-			{
-				title: "Dapatkan klik",
-				description: "Setiap senarai paut terus ke tapak anda. Klik dijejak supaya anda nampak apa yang papan hantar.",
+				title: "Tuntut!",
+				description: "Bayar untuk kunci tempat itu.",
 			},
 		],
+		aboutTopUpNote: "Jika anda naik dengan produk yang sama, anda hanya bayar beza untuk naik.",
 		heroClaim: "Tuntut",
 		heroFor: "dengan",
 		targetRank: "Ranking sasaran",
@@ -177,6 +174,7 @@ export const translations: Record<Locale, Messages> = {
 		checkoutStartError: "Tidak dapat mulakan pembayaran.",
 		listingsOne: "{count} produk ditawarkan di mytawaran",
 		listingsMany: "{count} produk ditawarkan di mytawaran",
+		totalContribution: "Jumlah ditawarkan setakat ini",
 		trendingTitle: "Sedang hangat",
 		latestActivityTitle: "Aktiviti terkini",
 		clicksPerHourOne: "{count} klik / jam",
@@ -210,22 +208,19 @@ export const translations: Record<Locale, Messages> = {
 		aboutDescription: "面向马来西亚产品的付费排行榜。付款抢占排名，出价超过他人，为你的网站带来流量。最低出价为 RM2。",
 		aboutRules: [
 			{
-				title: "抢占席位",
-				description: "输入产品网址并选择上榜金额。最低出价为 RM2。",
+				title: "设定排名或金额",
+				description: "选择目标排名，或你想支付的金额。最低出价为 RM2。",
 			},
 			{
-				title: "按贡献排名",
-				description: "总额越高排名越前。前三名登上领奖台，其余显示在下方列表。",
+				title: "输入产品网址",
+				description: "粘贴你想上榜的网站。",
 			},
 			{
-				title: "加码即可上升",
-				description: "已经上榜？只需补差价即可达到新的目标排名。",
-			},
-			{
-				title: "获得点击",
-				description: "每条榜单直接链到你的网站。点击会被追踪，方便你查看榜单带来的流量。",
+				title: "抢占！",
+				description: "付款锁定该席位。",
 			},
 		],
+		aboutTopUpNote: "同一产品往上爬时，只需补差价即可上升。",
 		heroClaim: "抢占",
 		heroFor: "出价",
 		targetRank: "目标排名",
@@ -245,6 +240,7 @@ export const translations: Record<Locale, Messages> = {
 		checkoutStartError: "无法开始结账。",
 		listingsOne: "已有 {count} 个产品在 mytawaran 出价",
 		listingsMany: "已有 {count} 个产品在 mytawaran 出价",
+		totalContribution: "至今总出价",
 		trendingTitle: "热门",
 		latestActivityTitle: "最新动态",
 		clicksPerHourOne: "{count} 次点击 / 小时",

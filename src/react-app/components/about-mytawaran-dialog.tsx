@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useLocale } from "@/i18n/locale-provider";
 import logo from "@/assets/mytawaran-hibiscus.png";
+import claimBar from "@/assets/about-claim-bar.png";
 
 export function AboutMytawaranDialog({ variant = "hero" }: { variant?: "hero" | "nav" }) {
 	const { t, aboutRules } = useLocale();
@@ -29,7 +30,7 @@ export function AboutMytawaranDialog({ variant = "hero" }: { variant?: "hero" | 
 					)
 				}
 			/>
-			<DialogContent className="about-mytawaran-dialog sm:max-w-md">
+			<DialogContent className="about-mytawaran-dialog sm:max-w-lg">
 				<DialogHeader className="about-mytawaran-header">
 					<img className="about-mytawaran-logo" src={logo} alt="" />
 					<div className="about-mytawaran-heading">
@@ -43,11 +44,15 @@ export function AboutMytawaranDialog({ variant = "hero" }: { variant?: "hero" | 
 							<span className="about-mytawaran-step-index">{index + 1}</span>
 							<div>
 								<strong>{rule.title}</strong>
-								<p>{rule.description}</p>
+								{index === 0 ? (
+									<img className="about-claim-bar" src={claimBar} alt="" />
+								) : null}
+								{rule.description ? <p>{rule.description}</p> : null}
 							</div>
 						</li>
 					))}
 				</ol>
+				<p className="about-mytawaran-note">{t("aboutTopUpNote")}</p>
 			</DialogContent>
 		</Dialog>
 	);

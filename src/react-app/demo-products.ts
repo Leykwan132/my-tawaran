@@ -149,6 +149,8 @@ export type LatestPayment = {
 	rank: number | null;
 };
 
+export const DEMO_RAISED_SEN = DEMO_PRODUCTS.reduce((sum, product) => sum + product.totalPaidSen, 0);
+
 export const DEMO_TRENDING: TrendingSite[] = DEMO_PRODUCTS.slice()
 	.sort((a, b) => b.clickCount - a.clickCount)
 	.slice(0, 6)
