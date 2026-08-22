@@ -72,6 +72,8 @@ describe("minimumTotalForRank", () => {
 	it("defaults the floor to RM2", () => {
 		expect(minimumTotalForRank(9, [])).toBe(200);
 	});
+
+	it("returns the minimum bid when only lower ranks are available", () => {
 		expect(minimumTotalForRank(2, [1_288_000], { minimumSen: 200 })).toBe(200);
 	});
 

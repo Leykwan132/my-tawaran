@@ -74,10 +74,6 @@ function toIsoNow() {
 	return new Date().toISOString();
 }
 
-function money(sen: number): string {
-	return `RM${(sen / 100).toFixed(2)}`;
-}
-
 function canonicalizeWebsite(value: unknown) {
 	if (typeof value !== "string") throw new ApiError("Website URL is required", 400);
 	let url: URL;
@@ -213,9 +209,12 @@ app.get("/api/", (c) => c.json({ name: "MyTawaran" }));
 
 app.get("/api/stats", async (c) => {
 	const raisedRow = await c.env.my_tawaran_db
-		.prepare("SELECT total_raised_sen AS total FROM platform_stats WHERE id = 1")
-		.first<{ total: number }>();
-	return c.json({ totalRaisedSen: raisedRow?.total ?? 0 });
+		.prepare("SELECT total_raised_sen AS total, listing_count AS listings FROM platform_stats WHERE id = 1")
+		.first<{ total: number; listings: number }>();
+	return c.json({
+		totalRaisedSen: raisedRow?.total ?? 0,
+		listingCount: raisedRow?.listings ?? 0,
+	});
 });
 
 app.get("/api/products", async (c) => {
@@ -226,9 +225,10 @@ app.get("/api/products", async (c) => {
 		.first<{ total: number }>();
 	const total = totalRow?.total ?? 0;
 	const raisedRow = await c.env.my_tawaran_db
-		.prepare("SELECT total_raised_sen AS total FROM platform_stats WHERE id = 1")
-		.first<{ total: number }>();
+		.prepare("SELECT total_raised_sen AS total, listing_count AS listings FROM platform_stats WHERE id = 1")
+		.first<{ total: number; listings: number }>();
 	const totalRaisedSen = raisedRow?.total ?? 0;
+	const listingCount = raisedRow?.listings ?? total;
 	const result = await c.env.my_tawaran_db
 		.prepare(
 			"SELECT id, canonical_url, domain, favicon_url, description, click_count, total_paid_sen, settlement_sequence FROM products WHERE status = 'active' ORDER BY total_paid_sen DESC, settlement_sequence ASC LIMIT ? OFFSET ?",
@@ -245,38 +245,74 @@ app.get("/api/products", async (c) => {
 		totalPaidSen: product.total_paid_sen,
 		rank: offset + index + 1,
 	}));
-	return c.json({ products, total, totalRaisedSen, limit, offset });
+	return c.json({ products, total, totalRaisedSen, listingCount, limit, offset });
 });
 
 app.post("/api/products/:id/click", async (c) => {
 	const productId = c.req.param("id");
-	await c.env.my_tawaran_db
-		.prepare("UPDATE products SET click_count = click_count + 1 WHERE id = ? AND status = 'active'")
-		.bind(productId)
-		.run();
+	const now = toIsoNow();
+	await c.env.my_tawaran_db.batch([
+		c.env.my_tawaran_db
+			.prepare("UPDATE products SET click_count = click_count + 1 WHERE id = ? AND status = 'active'")
+			.bind(productId),
+		c.env.my_tawaran_db
+			.prepare(
+				"INSERT INTO product_clicks (product_id, clicked_at) SELECT id, ? FROM products WHERE id = ? AND status = 'active'",
+			)
+			.bind(now, productId),
+	]);
 	return c.json({ ok: true });
 });
 
 app.get("/api/activity", async (c) => {
-	const result = await c.env.my_tawaran_db
+	const ranked = await c.env.my_tawaran_db
 		.prepare(
-			"SELECT p.domain AS product_domain, c.amount_sen, c.settled_at, u.email_domain FROM contributions c JOIN products p ON p.id = c.product_id JOIN contributors u ON u.id = c.contributor_id WHERE c.status = 'succeeded' ORDER BY c.settled_at DESC LIMIT 20",
+			"SELECT id FROM products WHERE status = 'active' ORDER BY total_paid_sen DESC, settlement_sequence ASC",
+		)
+		.all<{ id: string }>();
+	const ranks = new Map((ranked.results ?? []).map((row, index) => [row.id, index + 1]));
+
+	const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+	const trendingRows = await c.env.my_tawaran_db
+		.prepare(
+			"SELECT p.domain, p.canonical_url, p.favicon_url, COUNT(*) AS clicks_per_hour FROM product_clicks c JOIN products p ON p.id = c.product_id WHERE p.status = 'active' AND c.clicked_at >= ? GROUP BY p.id, p.domain, p.canonical_url, p.favicon_url ORDER BY clicks_per_hour DESC, p.domain ASC LIMIT 6",
+		)
+		.bind(since)
+		.all<{
+			domain: string;
+			canonical_url: string;
+			favicon_url: string;
+			clicks_per_hour: number;
+		}>();
+	const trending = (trendingRows.results ?? []).map((row) => ({
+		domain: row.domain,
+		url: row.canonical_url,
+		faviconUrl: row.favicon_url,
+		clicksPerHour: row.clicks_per_hour,
+	}));
+
+	const latestRows = await c.env.my_tawaran_db
+		.prepare(
+			"SELECT p.id AS product_id, p.domain, p.canonical_url, p.favicon_url, c.amount_sen, c.settled_at FROM contributions c JOIN products p ON p.id = c.product_id WHERE c.status = 'succeeded' AND p.status = 'active' ORDER BY c.settled_at DESC LIMIT 6",
 		)
 		.all<{
-			product_domain: string;
+			product_id: string;
+			domain: string;
+			canonical_url: string;
+			favicon_url: string;
 			amount_sen: number;
 			settled_at: string;
-			email_domain: string;
 		}>();
-	return c.json({
-		activity: (result.results ?? []).map((row) => ({
-			domain: row.product_domain,
-			contributorDomain: row.email_domain,
-			amountSen: row.amount_sen,
-			amount: money(row.amount_sen),
-			settledAt: row.settled_at,
-		})),
-	});
+	const latest = (latestRows.results ?? []).map((row) => ({
+		domain: row.domain,
+		url: row.canonical_url,
+		faviconUrl: row.favicon_url,
+		amountSen: row.amount_sen,
+		rank: ranks.get(row.product_id) ?? null,
+		settledAt: row.settled_at,
+	}));
+
+	return c.json({ trending, latest });
 });
 
 app.post("/api/checkout", async (c) => {
@@ -511,6 +547,11 @@ app.post("/api/stripe/webhook", async (c) => {
 				"UPDATE contributions SET stripe_session_id = ?, stripe_payment_intent_id = ?, status = 'succeeded', settlement_sequence = ?, settled_at = ? WHERE id = ? AND status = 'pending'",
 			)
 			.bind(session.id, session.payment_intent ?? null, webhook.sequence, now, contributionId),
+		db
+			.prepare(
+				"UPDATE platform_stats SET listing_count = listing_count + 1 WHERE id = 1 AND EXISTS (SELECT 1 FROM products WHERE id = ? AND status = 'draft') AND EXISTS (SELECT 1 FROM contributions WHERE id = ? AND status = 'succeeded' AND settlement_sequence = ? AND applied_at IS NULL)",
+			)
+			.bind(productId, contributionId, webhook.sequence),
 		db
 			.prepare(
 				"UPDATE products SET total_paid_sen = total_paid_sen + (SELECT amount_sen FROM contributions WHERE id = ?), settlement_sequence = ?, status = 'active', updated_at = ? WHERE id = ? AND EXISTS (SELECT 1 FROM contributions WHERE id = ? AND status = 'succeeded' AND settlement_sequence = ? AND applied_at IS NULL)",

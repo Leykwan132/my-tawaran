@@ -134,4 +134,39 @@ export const DEMO_PRODUCTS: Product[] = DEMO_SEEDS.map((seed, index) => {
 	};
 });
 
-export const DEMO_RAISED_SEN = DEMO_PRODUCTS.reduce((sum, product) => sum + product.totalPaidSen, 0);
+export type TrendingSite = {
+	domain: string;
+	url: string;
+	faviconUrl: string;
+	clicksPerHour: number;
+};
+
+export type LatestPayment = {
+	domain: string;
+	url: string;
+	faviconUrl: string;
+	amountSen: number;
+	rank: number | null;
+};
+
+export const DEMO_TRENDING: TrendingSite[] = DEMO_PRODUCTS.slice()
+	.sort((a, b) => b.clickCount - a.clickCount)
+	.slice(0, 6)
+	.map((product, index) => ({
+		domain: product.domain,
+		url: product.url,
+		faviconUrl: product.faviconUrl,
+		clicksPerHour: Math.max(2, Math.round(48 - index * 7)),
+	}));
+
+export const DEMO_LATEST: LatestPayment[] = [7, 12, 3, 18, 5, 24].map((rank, index) => {
+	const product = DEMO_PRODUCTS[rank - 1];
+	return {
+		domain: product.domain,
+		url: product.url,
+		faviconUrl: product.faviconUrl,
+		amountSen: 200 + index * 150,
+		rank: product.rank,
+	};
+});
+

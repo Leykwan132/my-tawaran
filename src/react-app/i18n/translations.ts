@@ -30,8 +30,6 @@ type Messages = {
 	productUrlPlaceholder: string;
 	claim: string;
 	opening: string;
-	claimSummary: string;
-	yourProduct: string;
 	clicksOne: string;
 	clicksMany: string;
 	rankAvailable: string;
@@ -39,7 +37,14 @@ type Messages = {
 	checkoutCancelled: string;
 	checkoutCancelProcessing: string;
 	checkoutStartError: string;
-	raisedSoFar: string;
+	listingsOne: string;
+	listingsMany: string;
+	trendingTitle: string;
+	latestActivityTitle: string;
+	clicksPerHour: string;
+	clicksPerHourOne: string;
+	trendingEmpty: string;
+	latestEmpty: string;
 	statsEyebrow: string;
 	statsTitle: string;
 	statsDescription: string;
@@ -53,6 +58,8 @@ type Messages = {
 	paginationPrevAria: string;
 	paginationNextAria: string;
 	paginationSummary: string;
+	footerBuiltProudly: string;
+	footerAndBy: string;
 };
 
 export const translations: Record<Locale, Messages> = {
@@ -93,8 +100,6 @@ export const translations: Record<Locale, Messages> = {
 		productUrlPlaceholder: "Your product URL",
 		claim: "Claim",
 		opening: "Opening…",
-		claimSummary: "Tawarkan {domain} at #{rank} for {amount}.",
-		yourProduct: "your product",
 		clicksOne: "{count} click",
 		clicksMany: "{count} clicks",
 		rankAvailable: "Rank {rank} available",
@@ -102,7 +107,14 @@ export const translations: Record<Locale, Messages> = {
 		checkoutCancelled: "Checkout cancelled. No placement was changed.",
 		checkoutCancelProcessing: "Checkout cancellation is still processing. Reload to retry.",
 		checkoutStartError: "Unable to start checkout.",
-		raisedSoFar: "{amount} raised so far",
+		listingsOne: "{count} product tawared on mytawaran",
+		listingsMany: "{count} products tawared on mytawaran",
+		trendingTitle: "Trending",
+		latestActivityTitle: "Latest activity",
+		clicksPerHourOne: "{count} click / hour",
+		clicksPerHour: "{count} clicks / hour",
+		trendingEmpty: "No click data yet.",
+		latestEmpty: "No payments yet.",
 		statsEyebrow: "MyTawaran analytics",
 		statsTitle: "How the board is moving.",
 		statsDescription: "Traffic and outbound website clicks are measured with PostHog.",
@@ -116,6 +128,8 @@ export const translations: Record<Locale, Messages> = {
 		paginationPrevAria: "Go to previous page",
 		paginationNextAria: "Go to next page",
 		paginationSummary: "Showing {start}–{end} of {total}",
+		footerBuiltProudly: "Built proudly in",
+		footerAndBy: "and by",
 	},
 	ms: {
 		documentTitle: "mytawaran — tuntut sudut internet anda",
@@ -154,8 +168,6 @@ export const translations: Record<Locale, Messages> = {
 		productUrlPlaceholder: "URL produk anda",
 		claim: "Tuntut",
 		opening: "Membuka…",
-		claimSummary: "Tawarkan {domain} di #{rank} dengan {amount}.",
-		yourProduct: "produk anda",
 		clicksOne: "{count} klik",
 		clicksMany: "{count} klik",
 		rankAvailable: "Ranking {rank} masih kosong",
@@ -163,7 +175,14 @@ export const translations: Record<Locale, Messages> = {
 		checkoutCancelled: "Pembayaran dibatalkan. Tiada kedudukan diubah.",
 		checkoutCancelProcessing: "Pembatalan pembayaran masih diproses. Muat semula untuk cuba lagi.",
 		checkoutStartError: "Tidak dapat mulakan pembayaran.",
-		raisedSoFar: "{amount} dikumpul setakat ini",
+		listingsOne: "{count} produk ditawarkan di mytawaran",
+		listingsMany: "{count} produk ditawarkan di mytawaran",
+		trendingTitle: "Sedang hangat",
+		latestActivityTitle: "Aktiviti terkini",
+		clicksPerHourOne: "{count} klik / jam",
+		clicksPerHour: "{count} klik / jam",
+		trendingEmpty: "Belum ada data klik.",
+		latestEmpty: "Belum ada pembayaran.",
 		statsEyebrow: "Analitik MyTawaran",
 		statsTitle: "Bagaimana papan sedang bergerak.",
 		statsDescription: "Trafik dan klik keluar ke tapak web diukur dengan PostHog.",
@@ -177,6 +196,8 @@ export const translations: Record<Locale, Messages> = {
 		paginationPrevAria: "Ke halaman sebelumnya",
 		paginationNextAria: "Ke halaman seterusnya",
 		paginationSummary: "Menunjukkan {start}–{end} daripada {total}",
+		footerBuiltProudly: "Dibina dengan bangga di",
+		footerAndBy: "dan oleh",
 	},
 	zh: {
 		documentTitle: "mytawaran — 抢占你的网络一席",
@@ -215,8 +236,6 @@ export const translations: Record<Locale, Messages> = {
 		productUrlPlaceholder: "你的产品网址",
 		claim: "抢占",
 		opening: "正在打开…",
-		claimSummary: "为 {domain} 抢占 #{rank}，出价 {amount}。",
-		yourProduct: "你的产品",
 		clicksOne: "{count} 次点击",
 		clicksMany: "{count} 次点击",
 		rankAvailable: "第 {rank} 名可抢占",
@@ -224,7 +243,14 @@ export const translations: Record<Locale, Messages> = {
 		checkoutCancelled: "已取消结账。排名未被更改。",
 		checkoutCancelProcessing: "取消结账仍在处理中。请刷新后重试。",
 		checkoutStartError: "无法开始结账。",
-		raisedSoFar: "至今已筹集 {amount}",
+		listingsOne: "已有 {count} 个产品在 mytawaran 出价",
+		listingsMany: "已有 {count} 个产品在 mytawaran 出价",
+		trendingTitle: "热门",
+		latestActivityTitle: "最新动态",
+		clicksPerHourOne: "{count} 次点击 / 小时",
+		clicksPerHour: "{count} 次点击 / 小时",
+		trendingEmpty: "暂无点击数据。",
+		latestEmpty: "暂无付款记录。",
 		statsEyebrow: "MyTawaran 数据分析",
 		statsTitle: "排行榜正在如何变化。",
 		statsDescription: "流量与外链点击由 PostHog 统计。",
@@ -238,6 +264,8 @@ export const translations: Record<Locale, Messages> = {
 		paginationPrevAria: "前往上一页",
 		paginationNextAria: "前往下一页",
 		paginationSummary: "显示第 {start}–{end} 项，共 {total} 项",
+		footerBuiltProudly: "自豪地诞生于",
+		footerAndBy: "由",
 	},
 };
 

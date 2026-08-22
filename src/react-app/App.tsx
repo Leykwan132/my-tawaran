@@ -12,7 +12,7 @@ import {
 	minimumTotalForRank,
 	MINIMUM_SEN,
 } from "../worker/ranking";
-import { DEMO_PRODUCTS, DEMO_RAISED_SEN, type Product } from "@/demo-products";
+import { DEMO_PRODUCTS, DEMO_TRENDING, DEMO_LATEST, type LatestPayment, type Product, type TrendingSite } from "@/demo-products";
 import logo from "./assets/mytawaran-hibiscus.png";
 import malaysiaFlag from "./assets/malaysia-flag.png";
 import "./App.css";
@@ -91,34 +91,32 @@ function Header() {
 	);
 }
 
+function Footer() {
+	const { t } = useLocale();
+
+	return (
+		<footer className="site-footer">
+			<p>
+				{t("footerBuiltProudly")}
+				<img className="site-footer-flag" src={malaysiaFlag} alt="Malaysia" />
+				{t("footerAndBy")}{" "}
+				<a href="https://www.linkedin.com/in/ley-kwan-c-129678228/" target="_blank" rel="noreferrer">
+					Kwan
+				</a>
+			</p>
+		</footer>
+	);
+}
+
 function StatsPage() {
-	const { t, currency } = useLocale();
+	const { t } = useLocale();
 	const embedUrl = import.meta.env.VITE_PUBLIC_POSTHOG_DASHBOARD_EMBED_URL as string | undefined;
-	const useLiveLeaderboard = import.meta.env.DEV && new URLSearchParams(window.location.search).get("live") === "1";
-	const showDemo = import.meta.env.DEV && !useLiveLeaderboard;
-	const [totalRaisedSen, setTotalRaisedSen] = useState(showDemo ? DEMO_RAISED_SEN : 0);
-
-	useEffect(() => {
-		if (showDemo) return;
-		void fetch("/api/stats")
-			.then((response) => response.json() as Promise<{ totalRaisedSen?: number }>)
-			.then((data) => {
-				if (typeof data.totalRaisedSen === "number") setTotalRaisedSen(data.totalRaisedSen);
-			})
-			.catch(() => undefined);
-	}, [showDemo]);
-
 	return (
 		<main className="site-shell stats-shell">
 			<Header />
 			<section className="stats-header">
 				<p className="eyebrow">{t("statsEyebrow")}</p>
 				<h1>{t("statsTitle")}</h1>
-				{totalRaisedSen > 0 ? (
-					<p className="raised-total raised-total--stats">
-						{t("raisedSoFar", { amount: currency.format(totalRaisedSen / 100) })}
-					</p>
-				) : null}
 				<p>{t("statsDescription")}</p>
 			</section>
 			{embedUrl ? (
@@ -131,6 +129,7 @@ function StatsPage() {
 					</p>
 				</section>
 			)}
+			<Footer />
 		</main>
 	);
 }
@@ -207,16 +206,51 @@ function PodiumPlaceholder({ rank }: { rank: 1 | 2 | 3 }) {
 	);
 }
 
+function PodiumCard({ product, rank }: { product: Product; rank: 1 | 2 | 3 }) {
+	const { t, currency, number } = useLocale();
+	return (
+		<ProductLink product={product} className={`podium-card podium-card--rank-${rank}`}>
+			<div className="podium-card-header">
+				<span className={`podium-rank podium-rank--${rank}`}>#{rank}</span>
+				<div className="podium-card-stats">
+					<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
+					<span className="podium-card-clicks">{formatClicks(product.clickCount, number, t)}</span>
+				</div>
+			</div>
+			<img src={product.faviconUrl} alt="" />
+			<ProductCopy product={product} />
+		</ProductLink>
+	);
+}
+
+function LeaderboardRow({ product }: { product: Product }) {
+	const { t, currency, number } = useLocale();
+	return (
+		<ProductLink product={product} className="leaderboard-row">
+			<img src={product.faviconUrl} alt="" />
+			<LeaderboardRowCopy product={product} />
+			<div className="leaderboard-row-stats">
+				<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
+				<span className="leaderboard-row-clicks">{formatClicks(product.clickCount, number, t)}</span>
+			</div>
+		</ProductLink>
+	);
+}
+
 function Leaderboard({
 	products,
 	total,
 	page,
 	onPageChange,
+	trending,
+	latest,
 }: {
 	products: Product[];
 	total: number;
 	page: number;
 	onPageChange: (page: number) => void;
+	trending: TrendingSite[];
+	latest: LatestPayment[];
 }) {
 	const showPodium = page === 0;
 	const rest = showPodium ? products.filter((product) => product.rank > 3) : products;
@@ -229,45 +263,100 @@ function Leaderboard({
 	return (
 		<div className="leaderboard">
 			{showPodium && (
-				<div className="podium">
-					{podiumOrder.map((rank) => {
-						const product = products.find((entry) => entry.rank === rank);
-						if (!product) return <PodiumPlaceholder key={rank} rank={rank} />;
-
-						return (
-							<ProductLink key={product.id} product={product} className={`podium-card podium-card--rank-${rank}`}>
-								<div className="podium-card-header">
-									<span className={`podium-rank podium-rank--${rank}`}>#{rank}</span>
-									<div className="podium-card-stats">
-										<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
-										<span className="podium-card-clicks">{formatClicks(product.clickCount, number, t)}</span>
-									</div>
-								</div>
-								<img src={product.faviconUrl} alt="" />
-								<ProductCopy product={product} />
-							</ProductLink>
-						);
-					})}
+				<div className="leaderboard-podium-wrap">
+					<div className="podium">
+						{podiumOrder.map((rank) => {
+							const product = products.find((entry) => entry.rank === rank);
+							if (!product) return <PodiumPlaceholder key={rank} rank={rank} />;
+							return <PodiumCard key={product.id} product={product} rank={rank} />;
+						})}
+					</div>
 				</div>
 			)}
 
-			{rest.length > 0 && (
-				<div className="leaderboard-rows">
-					{rest.map((product, index) => (
-						<Fragment key={product.id}>
-							{index > 0 ? <Separator /> : null}
-							<ProductLink product={product} className="leaderboard-row">
-								<img src={product.faviconUrl} alt="" />
-								<LeaderboardRowCopy product={product} />
-								<div className="leaderboard-row-stats">
-									<strong className="product-price">{currency.format(product.totalPaidSen / 100)}</strong>
-									<span className="leaderboard-row-clicks">{formatClicks(product.clickCount, number, t)}</span>
-								</div>
-							</ProductLink>
-						</Fragment>
-					))}
-				</div>
-			)}
+			<div className={`leaderboard-body${showPodium ? " leaderboard-body--rails" : ""}`}>
+				{showPodium ? (
+					<section className="activity-panel activity-panel--trending" aria-labelledby="trending-heading">
+						<h2 id="trending-heading">{t("trendingTitle")}</h2>
+						{trending.length === 0 ? (
+							<p className="activity-empty">{t("trendingEmpty")}</p>
+						) : (
+							<ul>
+								{trending.map((site) => (
+									<li key={site.domain}>
+										<a
+											href={site.url}
+											target="_blank"
+											rel="noreferrer"
+											onClick={() =>
+												posthog.capture("outbound_link_clicked", {
+													destination_url: site.url,
+													destination_domain: site.domain,
+													source_page: "trending",
+												})
+											}
+										>
+											<img src={site.faviconUrl} alt="" />
+											<span className="activity-domain">{site.domain}</span>
+											<span className="activity-meta">
+											{t(site.clicksPerHour === 1 ? "clicksPerHourOne" : "clicksPerHour", {
+												count: number.format(site.clicksPerHour),
+											})}
+											</span>
+										</a>
+									</li>
+								))}
+							</ul>
+						)}
+					</section>
+				) : null}
+
+				{rest.length > 0 ? (
+					<div className="leaderboard-rows">
+						{rest.map((product, index) => (
+							<Fragment key={product.id}>
+								{index > 0 ? <Separator /> : null}
+								<LeaderboardRow product={product} />
+							</Fragment>
+						))}
+					</div>
+				) : (
+					<div />
+				)}
+
+				{showPodium ? (
+					<section className="activity-panel activity-panel--latest" aria-labelledby="latest-heading">
+						<h2 id="latest-heading">{t("latestActivityTitle")}</h2>
+						{latest.length === 0 ? (
+							<p className="activity-empty">{t("latestEmpty")}</p>
+						) : (
+							<ul>
+								{latest.map((payment, index) => (
+									<li key={`${payment.domain}-${index}`}>
+										<a
+											href={payment.url}
+											target="_blank"
+											rel="noreferrer"
+											onClick={() =>
+												posthog.capture("outbound_link_clicked", {
+													destination_url: payment.url,
+													destination_domain: payment.domain,
+													source_page: "latest_activity",
+												})
+											}
+										>
+											<span className="activity-rank">#{payment.rank ?? "—"}</span>
+											<img src={payment.faviconUrl} alt="" />
+											<span className="activity-domain">{payment.domain}</span>
+											<span className="activity-price">{currency.format(payment.amountSen / 100)}</span>
+										</a>
+									</li>
+								))}
+							</ul>
+						)}
+					</section>
+				) : null}
+			</div>
 
 			<LeaderboardPagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={onPageChange} />
 		</div>
@@ -275,12 +364,13 @@ function Leaderboard({
 }
 
 function App() {
-	const { t, currency } = useLocale();
+	const { t, number } = useLocale();
 	const isStatsPage = window.location.pathname === "/stats";
 	const [products, setProducts] = useState<Product[]>([]);
 	const [productTotal, setProductTotal] = useState(0);
-	const [totalRaisedSen, setTotalRaisedSen] = useState(0);
 	const [rankingProducts, setRankingProducts] = useState<Product[]>([]);
+	const [trending, setTrending] = useState<TrendingSite[]>([]);
+	const [latest, setLatest] = useState<LatestPayment[]>([]);
 	const [page, setPage] = useState(0);
 	const [url, setUrl] = useState("");
 	const [bidSen, setBidSen] = useState(MINIMUM_SEN);
@@ -310,13 +400,10 @@ function App() {
 
 		const offset = page * PAGE_SIZE;
 		void fetch(`/api/products?limit=${PAGE_SIZE}&offset=${offset}`)
-			.then((response) => response.json() as Promise<{ products: Product[]; total: number; totalRaisedSen?: number }>)
+			.then((response) => response.json() as Promise<{ products: Product[]; total: number }>)
 			.then((productData) => {
 				setProducts(productData.products);
 				setProductTotal(productData.total);
-				if (typeof productData.totalRaisedSen === "number") {
-					setTotalRaisedSen(productData.totalRaisedSen);
-				}
 			})
 			.catch(() => showTranslatedError("loadLeaderboardError"));
 	}, [isStatsPage, page]);
@@ -333,6 +420,17 @@ function App() {
 				setRankingProducts(productData.products);
 			})
 			.catch(() => setRankingProducts([]));
+
+		void fetch("/api/activity")
+			.then((response) => response.json() as Promise<{ trending: TrendingSite[]; latest: LatestPayment[] }>)
+			.then((activity) => {
+				setTrending(activity.trending ?? []);
+				setLatest(activity.latest ?? []);
+			})
+			.catch(() => {
+				setTrending([]);
+				setLatest([]);
+			});
 	}, [isStatsPage]);
 
 	useEffect(() => {
@@ -375,8 +473,9 @@ function App() {
 		? DEMO_PRODUCTS.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 		: products;
 	const displayTotal = showDemoLeaderboard ? DEMO_PRODUCTS.length : productTotal;
-	const displayRaisedSen = showDemoLeaderboard ? DEMO_RAISED_SEN : totalRaisedSen;
 	const displayPage = page;
+	const displayTrending = showDemoLeaderboard ? DEMO_TRENDING : trending;
+	const displayLatest = showDemoLeaderboard ? DEMO_LATEST : latest;
 	const catalogProducts = showDemoLeaderboard ? DEMO_PRODUCTS : rankingProducts;
 	const rankingTotalsForBid = catalogProducts.map((product) => product.totalPaidSen);
 	const matchedListing = useMemo(() => {
@@ -549,16 +648,11 @@ function App() {
 							{isSubmitting ? t("opening") : t("claim")}
 						</button>
 					</div>
-					<p className="claim-summary">
-						{t("claimSummary", {
-							domain: previewDomain ?? t("yourProduct"),
-							rank: projectedRank,
-							amount: currency.format(displayAmountSen / 100),
-						})}
-					</p>
-					{displayRaisedSen > 0 ? (
-						<p className="raised-total">
-							{t("raisedSoFar", { amount: currency.format(displayRaisedSen / 100) })}
+					{displayTotal > 0 ? (
+						<p className="listing-count">
+							{t(displayTotal === 1 ? "listingsOne" : "listingsMany", {
+								count: number.format(displayTotal),
+							})}
 						</p>
 					) : null}
 					{(errorRaw || errorKey) && <p className="form-error">{errorRaw || (errorKey ? t(errorKey) : "")}</p>}
@@ -569,8 +663,11 @@ function App() {
 					total={displayTotal}
 					page={displayPage}
 					onPageChange={handlePageChange}
+					trending={displayTrending}
+					latest={displayLatest}
 				/>
 			</section>
+			<Footer />
 		</main>
 	);
 }

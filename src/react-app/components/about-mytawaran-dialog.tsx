@@ -30,9 +30,12 @@ export function AboutMytawaranDialog({ variant = "hero" }: { variant?: "hero" | 
 				}
 			/>
 			<DialogContent className="about-mytawaran-dialog sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>{t("aboutTitle")}</DialogTitle>
-					<DialogDescription>{t("aboutDescription")}</DialogDescription>
+				<DialogHeader className="about-mytawaran-header">
+					<img className="about-mytawaran-logo" src={logo} alt="" />
+					<div className="about-mytawaran-heading">
+						<DialogTitle>{t("aboutTitle")}</DialogTitle>
+						<DialogDescription>{t("aboutDescription")}</DialogDescription>
+					</div>
 				</DialogHeader>
 				<ol className="about-mytawaran-steps">
 					{aboutRules.map((rule, index) => (
