@@ -248,6 +248,7 @@ export const INTL_LOCALE: Record<Locale, string> = {
 };
 
 export function interpolate(template: string, vars: Record<string, string | number>) {
+	if (typeof template !== "string") return template;
 	return template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ""));
 }
 
