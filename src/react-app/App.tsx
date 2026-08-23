@@ -165,7 +165,7 @@ function trackOutbound(product: Product) {
 		source_page: "leaderboard",
 	});
 	if (!product.id.startsWith("demo-")) {
-		void fetch(`/api/products/${encodeURIComponent(product.id)}/click`, { method: "POST" });
+		void fetch(`/api/products/${encodeURIComponent(product.id)}/click`, { method: "POST", keepalive: true }).catch(() => {});
 	}
 }
 
