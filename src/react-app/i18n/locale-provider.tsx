@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import posthog from "posthog-js";
 import {
 	DEFAULT_LOCALE,
 	INTL_LOCALE,
@@ -11,6 +12,22 @@ import {
 } from "./translations";
 
 type MessageKey = Exclude<keyof (typeof translations)[Locale], "aboutRules">;
+
+const reportedMissingKeys = new Set<string>();
+
+function resolveMessage(locale: Locale, key: MessageKey): string {
+	const template = translations[locale][key];
+	if (typeof template === "string") return template;
+
+	const missId = `${locale}.${key}`;
+	if (!reportedMissingKeys.has(missId)) {
+		reportedMissingKeys.add(missId);
+		posthog.captureException(new Error(`Missing translation "${key}" for locale "${locale}"`));
+	}
+
+	const fallback = translations[DEFAULT_LOCALE][key];
+	return typeof fallback === "string" ? fallback : key;
+}
 
 type LocaleContextValue = {
 	locale: Locale;
@@ -65,7 +82,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 			}),
 			number: new Intl.NumberFormat(intlLocale),
 			t: (key, vars) => {
-				const template = messages[key];
+				const template = resolveMessage(locale, key);
 				return vars ? interpolate(template, vars) : template;
 			},
 		};
